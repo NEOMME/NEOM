@@ -34,6 +34,18 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000)
 
+## Live Deployment (Railway)
+
+**Production URL:** [https://neom-production.up.railway.app](https://neom-production.up.railway.app)
+
+**Railway Dashboard:** [https://railway.com/project/00dae2c5-3537-4c0f-96ef-62d1c2081c9d](https://railway.com/project/00dae2c5-3537-4c0f-96ef-62d1c2081c9d)
+
+For Supabase Auth on production, add this redirect URL in **Supabase → Authentication → URL Configuration**:
+```
+https://neom-production.up.railway.app/api/auth/callback
+```
+Also set **Site URL** to `https://neom-production.up.railway.app`.
+
 ## Supabase Setup (Real Database)
 
 1. **Environment** — `.env.local` must include:
