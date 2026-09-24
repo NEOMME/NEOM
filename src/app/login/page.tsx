@@ -42,8 +42,12 @@ function LoginForm() {
       .eq("auth_id", data.user.id)
       .maybeSingle();
 
-    const dest =
-      profile?.role === "admin" && redirect === "/student" ? "/admin" : redirect;
+    let dest = redirect;
+    if (profile?.role === "admin") {
+      dest = redirect.startsWith("/admin") ? redirect : "/admin";
+    } else if (redirect.startsWith("/admin")) {
+      dest = "/student";
+    }
 
     router.push(dest);
     router.refresh();
