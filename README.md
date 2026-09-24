@@ -1,36 +1,113 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Neom — NEMP (Neom Educational Mobility Platform)
+
+AI-powered university application platform. Students apply to partner universities worldwide with guided multi-step flows and AI assistance. Admins manage applications, categories, promotions, and email campaigns through a full dashboard with an integrated AI agent.
+
+## Features
+
+### Student Portal (`/student`)
+- **Dashboard** — Track applications, view progress, and access the AI assistant
+- **6-Step Application** — Profile → Destination → Academic → Programs → Documents → Review
+- **University Explorer** — Filter by country, category, and program
+- **AI Assistant** — Powered by Groq or DeepSeek; helps students understand services, universities, and the application process
+
+### Admin Dashboard (`/admin`)
+- **Overview** — Key metrics and recent activity
+- **Applications** — Review, filter, and update application statuses
+- **Users** — View registered students and admins
+- **Universities** — Publish/unpublish partner institutions
+- **Categories** — Create and manage university categories
+- **Promotions** — Manage promotional campaigns
+- **Email Campaigns** — View and manage email outreach
+- **AI Agent** — Admin AI that can manage applications, create categories, research universities, and search the platform
+
+### Landing Page (`/`)
+- Futuristic 3D UI with glassmorphism design
+- Feature highlights, process overview, and partner university showcase
 
 ## Getting Started
 
-First, run the development server:
-
 ```bash
+npm install
+cp .env.example .env.local   # add your Supabase keys
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Supabase Setup (Real Database)
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. **Environment** — `.env.local` must include:
+   ```env
+   NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+   NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
+   SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+   ```
 
-## Learn More
+2. **Run migration** — Open [Supabase SQL Editor](https://supabase.com/dashboard/project/ytdhzjdwfhtxzmobikzp/sql/new), paste `supabase/migrations/001_initial_schema.sql`, and click **Run**.
 
-To learn more about Next.js, take a look at the following resources:
+   Or with a database connection string:
+   ```bash
+   # Add SUPABASE_DB_URL to .env.local (Settings → Database → Connection string)
+   npm run db:migrate
+   ```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+3. **Seed data** — Visit [http://localhost:3000/setup](http://localhost:3000/setup) and click **Run Seed**, or:
+   ```bash
+   npm run db:seed
+   ```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+4. **Login** — Demo accounts after seed:
+   | Role    | Email               | Password          |
+   |---------|---------------------|-------------------|
+   | Admin   | admin@neom.edu      | NeomAdmin2026!    |
+   | Student | ahmed@student.com   | NeomStudent2026!  |
 
-## Deploy on Vercel
+> **Security:** Never commit `.env.local`. The service role key must stay server-side only.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## AI Configuration
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Copy `.env.example` to `.env.local` and add your API key:
+
+```env
+AI_PROVIDER=groq          # or "deepseek"
+GROQ_API_KEY=your_key     # https://console.groq.com
+DEEPSEEK_API_KEY=your_key # https://platform.deepseek.com
+```
+
+The platform works without API keys using intelligent fallback responses. Connect Groq or DeepSeek for full AI capabilities.
+
+## Tech Stack
+
+- **Next.js 16** — App Router, TypeScript
+- **Tailwind CSS 4** — Futuristic dark theme with glassmorphism
+- **Framer Motion** — Smooth animations
+- **React Three Fiber** — 3D background elements
+- **Zustand** — Client state with localStorage persistence
+- **Groq / DeepSeek** — AI models for student and admin assistants
+
+## Project Structure
+
+```
+src/
+├── app/
+│   ├── page.tsx              # Landing page
+│   ├── student/              # Student portal
+│   ├── admin/                # Admin dashboard
+│   └── api/ai/               # AI API routes
+├── components/
+│   ├── 3d/                   # Three.js scene
+│   ├── ai/                   # Chat panel
+│   ├── landing/              # Landing page sections
+│   ├── student/              # Student sidebar
+│   ├── admin/                # Admin sidebar
+│   └── ui/                   # Shared UI components
+└── lib/
+    ├── data.ts               # Seed data & knowledge base
+    ├── store.ts              # Zustand store
+    ├── ai.ts                 # AI integration
+    └── types.ts              # TypeScript types
+```
+
+## License
+
+Private — Neom Platform
