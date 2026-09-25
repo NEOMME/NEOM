@@ -35,7 +35,12 @@ export async function POST(req: NextRequest) {
     await saveChatMessage(profile.id, "assistant", response, "admin");
 
     return NextResponse.json({ response });
-  } catch {
-    return NextResponse.json({ error: "Failed to process request" }, { status: 500 });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Failed to process request";
+    console.error("[admin-ai]", message);
+    return NextResponse.json(
+      { error: message, response: `Something went wrong: ${message}` },
+      { status: 500 }
+    );
   }
 }

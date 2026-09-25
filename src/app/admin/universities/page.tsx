@@ -1,5 +1,6 @@
 "use client";
 
+import { AdminPageHeader } from "@/components/admin/admin-ui";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { useAdminStore } from "@/lib/admin-store";
@@ -20,22 +21,31 @@ export default function AdminUniversitiesPage() {
     setToggling(null);
   };
 
+  const publishedCount = universities.filter((u) => u.published).length;
+
   return (
-    <div className="p-8 max-w-6xl">
-      <h1 className="text-3xl font-bold text-white mb-2">Universities</h1>
-      <p className="text-slate-400 mb-6">
-        Manage partner universities. Approve researched entries from the Research page.
-      </p>
+    <div className="p-6 lg:p-8 max-w-6xl mx-auto w-full">
+      <AdminPageHeader
+        title="Universities"
+        description={`${publishedCount} of ${universities.length} partners visible to students. Approve research results on the Research page.`}
+      />
 
       <div className="space-y-3">
         {universities.map((uni) => {
           const country = countries.find((c) => c.id === uni.countryId);
           return (
-            <Card key={uni.id} className="bg-slate-900 border-slate-800">
-              <div className="flex items-center justify-between gap-4">
-                <div>
-                  <h3 className="font-medium text-white">{uni.name}</h3>
-                  <p className="text-sm text-slate-400">
+            <Card key={uni.id}>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h3 className="font-semibold text-slate-900">{uni.name}</h3>
+                    {!uni.published && (
+                      <span className="text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200">
+                        Hidden
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-sm text-slate-600 mt-0.5">
                     {country?.flag} {country?.name} · Rank #{uni.ranking} · {uni.tuition}
                   </p>
                   <p className="text-xs text-slate-500 mt-1">
@@ -45,9 +55,10 @@ export default function AdminUniversitiesPage() {
                 </div>
                 <Button
                   size="sm"
-                  variant={uni.published ? "ghost" : "primary"}
+                  variant={uni.published ? "secondary" : "primary"}
                   disabled={toggling === uni.id}
                   onClick={() => togglePublished(uni.id, uni.published)}
+                  className="shrink-0"
                 >
                   {uni.published ? "Unpublish" : "Publish"}
                 </Button>

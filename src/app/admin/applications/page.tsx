@@ -1,6 +1,7 @@
 "use client";
 
 import { ApplicationDetailPanel } from "@/components/admin/ApplicationDetailPanel";
+import { AdminEmptyState, AdminFilterTabs, AdminPageHeader } from "@/components/admin/admin-ui";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -8,7 +9,7 @@ import { useAdminStore } from "@/lib/admin-store";
 import type { ApplicationStatus } from "@/lib/types";
 import { formatDate } from "@/lib/utils";
 import { ChevronDown, ChevronUp } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 const STATUSES: ApplicationStatus[] = [
   "draft",
@@ -18,6 +19,15 @@ const STATUSES: ApplicationStatus[] = [
   "rejected",
 ];
 
+function initials(name: string) {
+  return name
+    .split(/\s+/)
+    .map((p) => p[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+}
+
 export default function AdminApplicationsPage() {
   const { applications, refresh } = useAdminStore();
   const [filter, setFilter] = useState<string>("all");
@@ -26,6 +36,18 @@ export default function AdminApplicationsPage() {
 
   const filtered =
     filter === "all" ? applications : applications.filter((a) => a.status === filter);
+
+  const filterOptions = useMemo(
+    () => [
+      { id: "all" as const, label: "All", count: applications.length },
+      ...STATUSES.map((s) => ({
+        id: s,
+        label: s.replace("_", " "),
+        count: applications.filter((a) => a.status === s).length,
+      })),
+    ],
+    [applications]
+  );
 
   const updateStatus = async (id: string, status: ApplicationStatus) => {
     setUpdating(id);
@@ -39,57 +61,63 @@ export default function AdminApplicationsPage() {
   };
 
   return (
-    <div className="p-8 max-w-6xl">
-      <h1 className="text-3xl font-bold text-white mb-6">Applications</h1>
+    <div className="p-6 lg:p-8 max-w-6xl mx-auto w-full">
+      <AdminPageHeader
+        title="Applications"
+        description="Review student submissions, update status, and open full applicant details."
+      />
 
-      <div className="flex gap-2 mb-6 flex-wrap">
-        {["all", ...STATUSES].map((s) => (
-          <button
-            key={s}
-            onClick={() => setFilter(s)}
-            className={`px-3 py-1.5 rounded-lg text-sm capitalize ${
-              filter === s
-                ? "bg-blue-600 text-white"
-                : "bg-slate-800 text-slate-400 hover:text-white"
-            }`}
-          >
-            {s.replace("_", " ")}
-          </button>
-        ))}
-      </div>
+      <AdminFilterTabs
+        value={filter}
+        onChange={setFilter}
+        options={filterOptions.map((o) => ({
+          id: o.id,
+          label: o.label.charAt(0).toUpperCase() + o.label.slice(1),
+          count: o.count,
+        }))}
+      />
 
-      <div className="space-y-4">
+      <div className="space-y-3">
         {filtered.map((app) => {
           const expanded = expandedId === app.id;
           return (
-            <Card key={app.id} className="bg-slate-900 border-slate-800">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div className="min-w-0 flex-1">
-                  <h3 className="font-medium text-white">{app.studentName}</h3>
-                  <p className="text-sm text-slate-400">
-                    {app.universityName} · {app.countryName}
-                  </p>
-                  {app.studentEmail && (
-                    <p className="text-sm text-slate-300 mt-0.5">{app.studentEmail}</p>
-                  )}
-                  <p className="text-xs text-slate-500 mt-1">
-                    Updated {formatDate(app.updatedAt)} · GPA: {app.academicInfo.gpa || "N/A"}
-                  </p>
+            <Card key={app.id}>
+              <div className="flex flex-col sm:flex-row sm:items-start gap-4">
+                <div className="flex gap-3 min-w-0 flex-1">
+                  <div
+                    className="w-10 h-10 rounded-full bg-blue-100 text-blue-800 text-sm font-semibold flex items-center justify-center shrink-0"
+                    aria-hidden
+                  >
+                    {initials(app.studentName)}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <h3 className="font-semibold text-slate-900">{app.studentName}</h3>
+                    <p className="text-sm text-slate-600">
+                      {app.universityName}
+                      {app.countryName ? ` · ${app.countryName}` : ""}
+                    </p>
+                    {app.studentEmail && (
+                      <p className="text-sm text-slate-500 mt-0.5 truncate">{app.studentEmail}</p>
+                    )}
+                    <p className="text-xs text-slate-400 mt-1">
+                      Updated {formatDate(app.updatedAt)} · GPA {app.academicInfo.gpa || "—"}
+                    </p>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2 flex-wrap shrink-0">
+                <div className="flex items-center gap-2 flex-wrap shrink-0 sm:justify-end">
                   <Button
                     size="sm"
-                    variant="ghost"
+                    variant="secondary"
                     className="inline-flex items-center gap-1"
                     onClick={() => setExpandedId(expanded ? null : app.id)}
                   >
                     {expanded ? (
                       <>
-                        <ChevronUp className="w-4 h-4" /> Hide details
+                        <ChevronUp className="w-4 h-4" /> Hide
                       </>
                     ) : (
                       <>
-                        <ChevronDown className="w-4 h-4" /> View student info
+                        <ChevronDown className="w-4 h-4" /> Details
                       </>
                     )}
                   </Button>
@@ -129,7 +157,7 @@ export default function AdminApplicationsPage() {
           );
         })}
         {filtered.length === 0 && (
-          <p className="text-slate-500">No applications match this filter.</p>
+          <AdminEmptyState message="No applications match this filter." />
         )}
       </div>
     </div>

@@ -40,20 +40,69 @@ export async function chatAdmin(
   profile: User
 ): Promise<string> {
   const { buildAdminSystemPrompt } = await import("./ai/context");
-  const data = await fetchPlatformData();
-  const contextText = `Platform overview:
-- ${data.universities.length} universities (${data.universities.filter((u) => u.published).length} published)
-- ${data.countries.length} countries, ${data.categories.length} categories`;
+  const { prepareAdminTurn, buildAdminKnowledgeContext, fallbackAdminResponse } =
+    await import("./ai/admin-context");
+  const { isLLMAvailable, isSmallLocalModel } = await import("./ai/config");
 
-  return runAgent({
-    systemPrompt: buildAdminSystemPrompt(contextText),
+  const { augmentedMessage, data, researchSummary, directReply } = await prepareAdminTurn(
     userMessage,
+    profile
+  );
+
+  if (directReply?.trim()) {
+    return directReply.trim();
+  }
+
+  const compact = isSmallLocalModel();
+  const contextText = buildAdminKnowledgeContext(compact);
+
+  let reply = await runAgent({
+    systemPrompt: buildAdminSystemPrompt(contextText),
+    userMessage: augmentedMessage,
     history,
     profile,
     agentType: "admin",
-    fallback: () =>
-      "Admin AI is unavailable. Check that your LLM is running (QWEN_API_URL on Railway Qwen3, or set GROQ_API_KEY / DEEPSEEK_API_KEY as fallback).",
+    fallback: () => fallbackAdminResponse(userMessage, data),
   });
+
+  if (!reply?.trim()) {
+    reply = fallbackAdminResponse(userMessage, data);
+    if (!isLLMAvailable()) {
+      reply += "\n\n(LLM not configured — showing live database snapshot.)";
+    }
+  }
+
+  if (researchSummary && !reply.includes(researchSummary.slice(0, 40))) {
+    reply = `${reply}\n\n${researchSummary}`;
+  }
+
+  if (reply && isLowQualityAdminReply(reply) && researchSummary) {
+    reply = researchSummary;
+  } else if (reply && isLowQualityAdminReply(reply)) {
+    reply = fallbackAdminResponse(userMessage, data);
+  }
+
+  return reply;
+}
+
+function isLowQualityAdminReply(text: string): boolean {
+  const t = text.trim();
+  if (t.length >= 120) return false;
+  const lower = t.toLowerCase().replace(/[!?.]/g, "");
+  const generic = new Set([
+    "great job",
+    "good job",
+    "thanks",
+    "thank you",
+    "ok",
+    "okay",
+    "sure",
+    "done",
+    "got it",
+    "hello",
+    "hi there",
+  ]);
+  return generic.has(lower) || (t.length < 40 && !t.includes("\n"));
 }
 
 function fallbackStudentResponse(message: string): string {

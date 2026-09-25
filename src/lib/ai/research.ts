@@ -147,7 +147,8 @@ export async function runUniversityResearch(
 
 export async function approveStagingUniversity(
   stagingId: string,
-  profile: User
+  profile: User,
+  options?: { publish?: boolean }
 ): Promise<{ staging: StagingUniversity; universityId: string }> {
   const supabase = createAdminClient();
 
@@ -177,7 +178,7 @@ export async function approveStagingUniversity(
     ranking: staging.ranking,
     programs: staging.programs,
     deadline: staging.deadline,
-    published: false,
+    published: options?.publish ?? false,
   });
 
   if (insertError) throw insertError;

@@ -1,5 +1,5 @@
 import type { User } from "@/lib/types";
-import { getActiveProvider } from "./config";
+import { getActiveProvider, getLLMGenerationOptions, supportsFunctionCalling } from "./config";
 import { callLLM } from "./llm";
 import {
   ADMIN_TOOLS,
@@ -35,7 +35,9 @@ export async function runAgent(params: {
   fallback: (message: string) => string;
 }): Promise<string> {
   const { systemPrompt, userMessage, history, profile, agentType, fallback } = params;
-  const tools = agentType === "admin" ? ADMIN_TOOLS : STUDENT_TOOLS;
+  const toolSet = agentType === "admin" ? ADMIN_TOOLS : STUDENT_TOOLS;
+  const tools = supportsFunctionCalling() ? toolSet : [];
+  const gen = getLLMGenerationOptions();
   const executeTool =
     agentType === "admin" ? executeAdminTool : executeStudentTool;
 
@@ -46,9 +48,9 @@ export async function runAgent(params: {
   ];
 
   for (let round = 0; round < MAX_TOOL_ROUNDS; round++) {
-    let response = await callLLM(messages, tools);
+    let response = await callLLM(messages, tools, gen);
     if (!response && tools.length > 0) {
-      response = await callLLM(messages, []);
+      response = await callLLM(messages, [], gen);
     }
     if (!response) return fallback(userMessage);
 
@@ -84,11 +86,12 @@ export async function runAgent(params: {
     break;
   }
 
-  let final = await callLLM(messages, tools);
+  let final = await callLLM(messages, tools, gen);
   if (!final?.content && tools.length > 0) {
-    final = await callLLM(messages, []);
+    final = await callLLM(messages, [], gen);
   }
-  return final?.content ?? fallback(userMessage);
+  const text = final?.content?.trim();
+  return text || fallback(userMessage);
 }
 
 export { getActiveProvider };

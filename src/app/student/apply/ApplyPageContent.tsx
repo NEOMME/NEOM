@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { APPLICATION_STEPS } from "@/lib/data";
 import { useNeomStore } from "@/lib/store";
-import type { ChatMessage } from "@/lib/types";
+import type { ApplicationDocument, ChatMessage } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, ArrowRight, Check, Loader2, Save, Upload } from "lucide-react";
@@ -27,7 +27,7 @@ const DEFAULT_FORM = {
   institution: "",
   graduationYear: "",
   program: "",
-  documents: [] as string[],
+  documents: [] as ApplicationDocument[],
 };
 
 export default function ApplyPageContent() {
@@ -91,7 +91,7 @@ export default function ApplyPageContent() {
     if (firstIncomplete >= 0) setStep(firstIncomplete);
   }, [draftParam, applications, universities]);
 
-  const update = (field: string, value: string | string[]) =>
+  const update = (field: string, value: string | string[] | ApplicationDocument[]) =>
     setForm((f) => ({ ...f, [field]: value }));
 
   const filteredUniversities = universities.filter(
@@ -183,9 +183,14 @@ export default function ApplyPageContent() {
 
     if (res.ok || data.fallback) {
       const fileName = data.fileName ?? file.name;
-      if (!form.documents.includes(fileName)) {
-        update("documents", [...form.documents, fileName]);
-      }
+      const entry: ApplicationDocument = {
+        label: docName,
+        fileName,
+        path: data.path,
+        url: data.url,
+      };
+      const withoutSlot = form.documents.filter((d) => d.label !== docName);
+      update("documents", [...withoutSlot, entry]);
     }
     setUploading(null);
   };
@@ -444,9 +449,7 @@ export default function ApplyPageContent() {
                   <div className="space-y-4">
                     <p className="text-sm text-slate-400">Upload required documents (PDF, JPEG, PNG — max 10MB):</p>
                     {["Transcript", "Passport / ID", "Recommendation Letter"].map((doc) => {
-                      const uploaded = form.documents.some((d) =>
-                        d.toLowerCase().includes(doc.toLowerCase().split(" ")[0])
-                      );
+                      const uploaded = form.documents.some((d) => d.label === doc);
                       return (
                         <label
                           key={doc}
@@ -489,7 +492,7 @@ export default function ApplyPageContent() {
                       ["Program", form.program],
                       ["Degree", form.degree],
                       ["GPA", form.gpa],
-                      ["Documents", form.documents.join(", ")],
+                      ["Documents", form.documents.map((d) => d.fileName).join(", ")],
                     ].map(([label, value]) => (
                       <div key={label as string} className="flex justify-between py-2 border-b border-slate-200">
                         <span className="text-slate-500">{label}</span>

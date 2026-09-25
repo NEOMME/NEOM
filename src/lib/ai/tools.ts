@@ -1,3 +1,4 @@
+import { runUniversityResearch } from "@/lib/ai/research";
 import {
   createNotification,
   fetchAdminData,
@@ -132,6 +133,23 @@ export const ADMIN_TOOLS: ToolDefinition[] = [
       name: "get_platform_stats",
       description: "Get platform statistics: applications, universities, pending research",
       parameters: { type: "object", properties: {} },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "run_university_research",
+      description:
+        "Run web/LLM research to discover universities and add them to the staging queue for admin review",
+      parameters: {
+        type: "object",
+        properties: {
+          query: { type: "string", description: "What to research e.g. top CS universities in Germany" },
+          countryId: { type: "string", description: "Optional country id e.g. de, uk" },
+          categoryId: { type: "string", description: "Optional category id" },
+        },
+        required: ["query"],
+      },
     },
   },
   {
@@ -287,6 +305,28 @@ export async function executeAdminTool(
 - Unread notifications: ${unread}
 - Students: ${data.users.length}
 - Active promotions: ${data.promotions.filter((p) => p.active).length}`;
+    }
+
+    case "run_university_research": {
+      const query = args.query as string;
+      if (!query?.trim()) return "Research query is required.";
+      const results = await runUniversityResearch(
+        {
+          query: query.trim(),
+          countryId: args.countryId as string | undefined,
+          categoryId: args.categoryId as string | undefined,
+        },
+        profile
+      );
+      if (results.length === 0) {
+        return `No universities extracted for "${query}". Try Admin → Research or set TAVILY_API_KEY.`;
+      }
+      return results
+        .map(
+          (r) =>
+            `• ${r.name} (staging id: ${r.id}) — ${r.programs.slice(0, 3).join(", ")} | status: ${r.status}`
+        )
+        .join("\n");
     }
 
     case "draft_email": {

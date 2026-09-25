@@ -51,6 +51,13 @@ export interface ApplicationStep {
   completed: boolean;
 }
 
+export interface ApplicationDocument {
+  label?: string;
+  fileName: string;
+  path?: string;
+  url?: string;
+}
+
 export interface Application {
   id: string;
   studentId: string;
@@ -73,7 +80,7 @@ export interface Application {
     institution: string;
     graduationYear: string;
   };
-  documents: string[];
+  documents: ApplicationDocument[];
   notes: string;
   createdAt: string;
   updatedAt: string;

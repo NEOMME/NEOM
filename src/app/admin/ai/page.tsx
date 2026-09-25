@@ -1,5 +1,6 @@
 "use client";
 
+import { AdminPageHeader } from "@/components/admin/admin-ui";
 import { ChatPanel } from "@/components/ai/ChatPanel";
 import { useAdminStore } from "@/lib/admin-store";
 import { useCallback } from "react";
@@ -29,10 +30,14 @@ export default function AdminAIPage() {
       });
 
       const data = await res.json();
+      const text =
+        (typeof data.response === "string" && data.response.trim()) ||
+        (typeof data.error === "string" && data.error) ||
+        (res.ok ? "" : `Request failed (${res.status}).`);
       addAdminMessage({
         id: `msg-${Date.now() + 1}`,
         role: "assistant",
-        content: data.response ?? "Sorry, I couldn't process that.",
+        content: text || "Sorry, I couldn't process that. Try “Show platform stats” or check LLM settings.",
         timestamp: new Date().toISOString(),
       });
     },
@@ -40,23 +45,23 @@ export default function AdminAIPage() {
   );
 
   return (
-    <div className="p-8 h-[calc(100vh-2rem)] max-w-4xl">
-      <h1 className="text-3xl font-bold text-white mb-2">Admin AI</h1>
-      <p className="text-slate-400 mb-6">
-        Operations assistant — review applications, check stats, draft emails, manage research.
-      </p>
-      <div className="h-[calc(100%-6rem)]">
+    <div className="p-6 lg:p-8 max-w-4xl mx-auto w-full flex flex-col min-h-[calc(100vh-8rem)]">
+      <AdminPageHeader
+        title="Admin AI"
+        description="Ask about applications, platform stats, research, or draft student emails."
+      />
+      <div className="flex-1 min-h-[420px]">
         <ChatPanel
-          title="Admin AI"
-          subtitle="Platform operations assistant"
+          title="Operations assistant"
+          subtitle="Powered by your configured LLM"
           messages={adminChat}
           onSend={handleSend}
-          placeholder="Ask about applications, stats, or draft an email..."
+          placeholder="Ask about applications, stats, or draft an email…"
           suggestions={[
             "Show platform stats",
-            "List submitted applications",
-            "Show pending research",
-            "Draft a welcome email for new students",
+            "List all submitted applications with student emails",
+            "Show pending research staging",
+            "Research top engineering universities in Germany",
           ]}
         />
       </div>

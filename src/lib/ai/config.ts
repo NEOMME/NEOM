@@ -134,6 +134,37 @@ export function isLLMAvailable(): boolean {
   return isAIConfigured();
 }
 
+/** Tiny local models (e.g. Ollama smollm) cannot use tools or large prompts reliably. */
+export function isSmallLocalModel(provider: AIProvider = getActiveProvider()): boolean {
+  if (provider !== "qwen") return false;
+  const model = (process.env.QWEN_MODEL ?? "smollm:135m").toLowerCase();
+  return (
+    model.includes("smollm") ||
+    model.includes("135m") ||
+    model.includes(":1b") ||
+    model.includes(":3b") ||
+    model.includes("tiny")
+  );
+}
+
+export function supportsFunctionCalling(provider: AIProvider = getActiveProvider()): boolean {
+  if (provider === "groq" || provider === "deepseek") return true;
+  if (provider === "qwen") return !isSmallLocalModel(provider);
+  return false;
+}
+
+export function getMaxContextChars(provider: AIProvider = getActiveProvider()): number {
+  if (isSmallLocalModel(provider)) return 4000;
+  return 14000;
+}
+
+export function getLLMGenerationOptions(provider: AIProvider = getActiveProvider()) {
+  return {
+    maxTokens: isSmallLocalModel(provider) ? 512 : 2048,
+    temperature: isSmallLocalModel(provider) ? 0.4 : 0.7,
+  };
+}
+
 export function getLLMConfig(provider: AIProvider = getActiveProvider()): LLMConfig {
   const apiKey =
     provider === "qwen"
@@ -171,11 +202,17 @@ async function chatCompletionOnce(
 ): Promise<ChatCompletionResult | null> {
   if (!isProviderConfigured(provider)) return null;
 
+  const gen = getLLMGenerationOptions(provider);
+  const apiMessages =
+    options.tools?.length
+      ? options.messages
+      : options.messages.filter((m) => m.role === "system" || m.role === "user" || m.role === "assistant");
+
   const body: Record<string, unknown> = {
     model: getModel(provider),
-    messages: options.messages,
-    temperature: options.temperature ?? 0.7,
-    max_tokens: options.maxTokens ?? 2048,
+    messages: apiMessages,
+    temperature: options.temperature ?? gen.temperature,
+    max_tokens: options.maxTokens ?? gen.maxTokens,
   };
 
   if (options.tools?.length) {
@@ -201,12 +238,22 @@ async function chatCompletionOnce(
     }
 
     const data = await res.json();
-    const choice = data.choices?.[0]?.message;
-    if (!choice) return null;
+    const choice = data.choices?.[0];
+    const message = choice?.message ?? choice;
+    if (!message) return null;
+
+    let content: string | null =
+      typeof message.content === "string" ? message.content : message.content ?? null;
+    if (!content?.trim() && typeof message.reasoning === "string") {
+      content = message.reasoning;
+    }
+    if (!content?.trim() && typeof data.message?.content === "string") {
+      content = data.message.content;
+    }
 
     return {
-      content: choice.content ?? null,
-      tool_calls: choice.tool_calls,
+      content: content?.trim() ? content : null,
+      tool_calls: message.tool_calls,
     };
   } catch (err) {
     console.error(`[AI:${provider}] request failed`, err);

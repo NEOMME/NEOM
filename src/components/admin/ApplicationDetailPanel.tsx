@@ -1,5 +1,6 @@
 "use client";
 
+import { ApplicationDocuments } from "@/components/admin/ApplicationDocuments";
 import type { Application } from "@/lib/types";
 
 function Field({ label, value }: { label: string; value: string }) {
@@ -7,7 +8,7 @@ function Field({ label, value }: { label: string; value: string }) {
   return (
     <div>
       <dt className="text-xs text-slate-500">{label}</dt>
-      <dd className="text-sm text-slate-200">{value}</dd>
+      <dd className="text-sm text-slate-800">{value}</dd>
     </div>
   );
 }
@@ -16,7 +17,7 @@ export function ApplicationDetailPanel({ app }: { app: Application }) {
   const { personalInfo, academicInfo } = app;
 
   return (
-    <div className="mt-4 pt-4 border-t border-slate-800 grid sm:grid-cols-2 gap-6">
+    <div className="mt-4 pt-4 border-t border-slate-200 grid sm:grid-cols-2 gap-6">
       <div>
         <h4 className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-3">
           Student contact
@@ -47,11 +48,7 @@ export function ApplicationDetailPanel({ app }: { app: Application }) {
               <h4 className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-2">
                 Documents
               </h4>
-              <ul className="text-sm text-slate-300 list-disc list-inside">
-                {app.documents.map((doc) => (
-                  <li key={doc}>{doc}</li>
-                ))}
-              </ul>
+              <ApplicationDocuments applicationId={app.id} documents={app.documents} />
             </div>
           )}
           {app.notes?.trim() && (
@@ -59,7 +56,7 @@ export function ApplicationDetailPanel({ app }: { app: Application }) {
               <h4 className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-2">
                 Notes
               </h4>
-              <p className="text-sm text-slate-300 whitespace-pre-wrap">{app.notes}</p>
+              <p className="text-sm text-slate-700 whitespace-pre-wrap">{app.notes}</p>
             </div>
           )}
         </div>

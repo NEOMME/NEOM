@@ -1,3 +1,4 @@
+import { normalizeApplicationDocuments } from "../documents";
 import type {
   Application,
   ApplicationStep,
@@ -99,7 +100,7 @@ export function mapApplication(row: DbApplication & Record<string, unknown>): Ap
   const personal = (row.personal_info ?? {}) as Application["personalInfo"];
   const academic = (row.academic_info ?? {}) as Application["academicInfo"];
   const steps = (row.steps ?? []) as ApplicationStep[];
-  const documents = Array.isArray(row.documents) ? (row.documents as string[]) : [];
+  const documents = normalizeApplicationDocuments(row.documents);
 
   return {
     id: row.id,
