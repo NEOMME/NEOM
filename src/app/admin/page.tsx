@@ -43,7 +43,7 @@ export default function AdminDashboard() {
           { icon: FileText, label: "Submitted Apps", value: submittedApps, href: "/admin/applications" },
           { icon: GraduationCap, label: "Universities", value: universities.length, href: "/admin/universities" },
           { icon: Search, label: "Pending Research", value: pendingResearch, href: "/admin/research" },
-          { icon: Users, label: "Students", value: users.filter((u) => u.role === "student").length, href: "/admin/applications" },
+          { icon: Users, label: "Students", value: users.filter((u) => u.role === "student").length, href: "/admin/users" },
         ].map((stat) => (
           <Link key={stat.label} href={stat.href}>
             <Card className="bg-slate-900 border-slate-800 hover:border-blue-600/50 transition-colors">

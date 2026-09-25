@@ -46,7 +46,10 @@ export async function runAgent(params: {
   ];
 
   for (let round = 0; round < MAX_TOOL_ROUNDS; round++) {
-    const response = await callLLM(messages, tools);
+    let response = await callLLM(messages, tools);
+    if (!response && tools.length > 0) {
+      response = await callLLM(messages, []);
+    }
     if (!response) return fallback(userMessage);
 
     if (response.tool_calls && response.tool_calls.length > 0) {
@@ -81,7 +84,10 @@ export async function runAgent(params: {
     break;
   }
 
-  const final = await callLLM(messages);
+  let final = await callLLM(messages, tools);
+  if (!final?.content && tools.length > 0) {
+    final = await callLLM(messages, []);
+  }
   return final?.content ?? fallback(userMessage);
 }
 

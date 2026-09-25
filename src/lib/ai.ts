@@ -52,7 +52,7 @@ export async function chatAdmin(
     profile,
     agentType: "admin",
     fallback: () =>
-      "Admin AI is unavailable. Configure QWEN_API_URL (Railway Qwen3) or GROQ_API_KEY / DEEPSEEK_API_KEY.",
+      "Admin AI is unavailable. Check that your LLM is running (QWEN_API_URL on Railway Qwen3, or set GROQ_API_KEY / DEEPSEEK_API_KEY as fallback).",
   });
 }
 

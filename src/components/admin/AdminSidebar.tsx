@@ -10,6 +10,7 @@ import {
   Mail,
   Search,
   Sparkles,
+  Users,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -17,6 +18,7 @@ import { usePathname, useRouter } from "next/navigation";
 const links = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
   { href: "/admin/applications", label: "Applications", icon: FileText },
+  { href: "/admin/users", label: "Students & users", icon: Users },
   { href: "/admin/universities", label: "Universities", icon: GraduationCap },
   { href: "/admin/research", label: "Research", icon: Search },
   { href: "/admin/emails", label: "Emails", icon: Mail },

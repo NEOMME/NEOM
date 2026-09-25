@@ -50,13 +50,19 @@ export async function updateSession(request: NextRequest) {
   }
 
   if (path.startsWith("/admin") && user) {
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("role")
-      .eq("auth_id", user.id)
-      .maybeSingle();
+    const metadataRole = user.user_metadata?.role;
+    let isAdmin = metadataRole === "admin";
 
-    if (profile?.role !== "admin") {
+    if (!isAdmin) {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("auth_id", user.id)
+        .maybeSingle();
+      isAdmin = profile?.role === "admin";
+    }
+
+    if (!isAdmin) {
       const url = request.nextUrl.clone();
       url.pathname = "/student";
       return NextResponse.redirect(url);
