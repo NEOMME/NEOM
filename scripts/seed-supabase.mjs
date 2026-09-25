@@ -68,47 +68,13 @@ const universities = [
   { id: "delft", name: "Delft University of Technology", country_id: "nl", categoryIds: ["eng-tech", "science"], description: "Netherlands' largest and most comprehensive university of technology.", tuition: "€12,000–€18,000/year", ranking: 47, programs: ["Aerospace Engineering", "Civil Engineering", "Computer Science"], deadline: "2026-04-15", published: true },
 ];
 
-const demoUsers = [
-  { email: "admin@neom.edu", password: "NeomAdmin2026!", name: "Sarah Admin", role: "admin" },
-  { email: "ahmed@student.com", password: "NeomStudent2026!", name: "Ahmed Hassan", role: "student", country: "Egypt" },
-  { email: "maria@student.com", password: "NeomStudent2026!", name: "Maria Garcia", role: "student", country: "Spain" },
-  { email: "james@student.com", password: "NeomStudent2026!", name: "James Chen", role: "student", country: "China" },
+const promotions = [
+  { title: "Early Bird Application", description: "Apply before January 2026 and get free document verification.", discount: "Free verification", active: true, start_date: "2025-09-01", end_date: "2026-01-31" },
+  { title: "STEM Excellence Scholarship", description: "Up to 25% tuition support for top STEM applicants.", discount: "25% tuition", active: true, start_date: "2025-09-01", end_date: "2026-06-30" },
 ];
-
-const steps = [
-  { id: "s1", title: "Profile", description: "Personal information", completed: true },
-  { id: "s2", title: "Destination", description: "Country & university", completed: true },
-  { id: "s3", title: "Academic", description: "Education history", completed: true },
-  { id: "s4", title: "Programs", description: "Program selection", completed: true },
-  { id: "s5", title: "Documents", description: "Upload documents", completed: true },
-  { id: "s6", title: "Review", description: "Final review", completed: true },
-];
-
-async function upsertAuthUser(user) {
-  const { data: existing } = await supabase.auth.admin.listUsers();
-  const found = existing?.users?.find((u) => u.email === user.email);
-
-  if (found) {
-    await supabase.auth.admin.updateUserById(found.id, {
-      password: user.password,
-      user_metadata: { name: user.name, role: user.role },
-    });
-    return found.id;
-  }
-
-  const { data, error } = await supabase.auth.admin.createUser({
-    email: user.email,
-    password: user.password,
-    email_confirm: true,
-    user_metadata: { name: user.name, role: user.role },
-  });
-
-  if (error) throw error;
-  return data.user.id;
-}
 
 async function main() {
-  console.log("🌱 Seeding Neom Supabase database...\n");
+  console.log("🌱 Seeding Neom platform data...\n");
 
   const { error: countriesErr } = await supabase.from("countries").upsert(countries);
   if (countriesErr) throw countriesErr;
@@ -131,105 +97,17 @@ async function main() {
   }
   console.log("✓ Universities");
 
-  const profileIds = {};
-  for (const user of demoUsers) {
-    const authId = await upsertAuthUser(user);
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("id")
-      .eq("email", user.email)
-      .maybeSingle();
-
-    if (profile) {
-      await supabase.from("profiles").update({
-        auth_id: authId,
-        name: user.name,
-        role: user.role,
-        country: user.country ?? null,
-      }).eq("id", profile.id);
-      profileIds[user.email] = profile.id;
-    } else {
-      const { data: inserted, error } = await supabase.from("profiles").insert({
-        auth_id: authId,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        country: user.country ?? null,
-      }).select("id").single();
-      if (error) throw error;
-      profileIds[user.email] = inserted.id;
-    }
-  }
-  console.log("✓ Demo users (auth + profiles)");
-
-  const applications = [
-    {
-      student_id: profileIds["ahmed@student.com"],
-      university_id: "oxford",
-      status: "under_review",
-      steps,
-      personal_info: { fullName: "Ahmed Hassan", dateOfBirth: "2002-03-15", nationality: "Egyptian", phone: "+20 100 123 4567" },
-      academic_info: { degree: "Bachelor of Engineering", gpa: "3.8", institution: "Cairo University", graduationYear: "2025" },
-      documents: ["transcript.pdf", "passport.pdf", "recommendation.pdf"],
-      notes: "Strong candidate for Computer Science program.",
-    },
-    {
-      student_id: profileIds["maria@student.com"],
-      university_id: "mit",
-      status: "submitted",
-      steps: steps.map((s, i) => ({ ...s, completed: i < 4 })),
-      personal_info: { fullName: "Maria Garcia", dateOfBirth: "2001-07-22", nationality: "Spanish", phone: "+34 600 123 456" },
-      academic_info: { degree: "Bachelor of Science", gpa: "3.9", institution: "Universidad de Barcelona", graduationYear: "2025" },
-      documents: ["transcript.pdf"],
-      notes: "",
-    },
-    {
-      student_id: profileIds["james@student.com"],
-      university_id: "nus",
-      status: "accepted",
-      steps,
-      personal_info: { fullName: "James Chen", dateOfBirth: "2000-11-08", nationality: "Chinese", phone: "+86 138 0000 1234" },
-      academic_info: { degree: "Bachelor of Computer Science", gpa: "3.95", institution: "Tsinghua University", graduationYear: "2024" },
-      documents: ["transcript.pdf", "passport.pdf", "recommendation.pdf", "portfolio.pdf"],
-      notes: "Accepted to Computer Science program. Scholarship eligible.",
-    },
-  ];
-
-  const { count } = await supabase.from("applications").select("*", { count: "exact", head: true });
-  if (!count) {
-    const { error: appsErr } = await supabase.from("applications").insert(applications);
-    if (appsErr) throw appsErr;
-    console.log("✓ Sample applications");
-  } else {
-    console.log("• Applications already exist, skipping");
-  }
-
-  const promotions = [
-    { title: "Early Bird Application", description: "Apply before January 2026 and get free document verification.", discount: "Free verification", active: true, start_date: "2025-09-01", end_date: "2026-01-31" },
-    { title: "STEM Excellence Scholarship", description: "Up to 25% tuition support for top STEM applicants.", discount: "25% tuition", active: true, start_date: "2025-09-01", end_date: "2026-06-30" },
-  ];
-
   const { count: promoCount } = await supabase.from("promotions").select("*", { count: "exact", head: true });
   if (!promoCount) {
-    await supabase.from("promotions").insert(promotions);
+    const { error } = await supabase.from("promotions").insert(promotions);
+    if (error) throw error;
     console.log("✓ Promotions");
+  } else {
+    console.log("• Promotions already exist, skipping");
   }
 
-  const emails = [
-    { subject: "Welcome to Neom — Start Your Application Journey", body: "Dear student, welcome to NEMP! Our AI assistant is ready to guide you...", status: "sent", recipients: 1240, sent_at: new Date("2025-09-01").toISOString() },
-    { subject: "New Universities Added — Explore 8 Partner Institutions", body: "We've added new partner universities in Germany, Singapore, and UAE...", status: "scheduled", recipients: 890 },
-  ];
-
-  const { count: emailCount } = await supabase.from("email_campaigns").select("*", { count: "exact", head: true });
-  if (!emailCount) {
-    await supabase.from("email_campaigns").insert(emails);
-    console.log("✓ Email campaigns");
-  }
-
-  console.log("\n✅ Seed complete!\n");
-  console.log("Demo login credentials:");
-  console.log("  Admin:   admin@neom.edu / NeomAdmin2026!");
-  console.log("  Student: ahmed@student.com / NeomStudent2026!");
+  console.log("\n✅ Seed complete!");
+  console.log("\nUsers can sign up at /signup.");
 }
 
 main().catch((err) => {

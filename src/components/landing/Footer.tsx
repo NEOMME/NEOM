@@ -11,8 +11,8 @@ export function Footer() {
           <span className="text-xs text-slate-500">NEMP — AI-Powered Applications</span>
         </div>
         <div className="flex gap-6 text-sm text-slate-400">
-          <Link href="/student" className="hover:text-cyan-400 transition-colors">Student Portal</Link>
-          <Link href="/admin" className="hover:text-cyan-400 transition-colors">Admin Dashboard</Link>
+          <Link href="/signup" className="hover:text-cyan-400 transition-colors">Get Started</Link>
+          <Link href="/login" className="hover:text-cyan-400 transition-colors">Sign In</Link>
           <a href="mailto:support@neom.edu" className="hover:text-cyan-400 transition-colors">Contact</a>
         </div>
         <p className="text-xs text-slate-600">&copy; 2026 Neom. All rights reserved.</p>

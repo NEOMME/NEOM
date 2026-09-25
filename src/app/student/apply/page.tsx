@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, ArrowRight, Check, Upload } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 const STEP_IDS = APPLICATION_STEPS.map((s) => s.id);
 
@@ -18,9 +18,11 @@ export default function ApplyPage() {
 
   const [step, setStep] = useState(0);
   const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState("");
 
   const [form, setForm] = useState({
-    fullName: currentStudent?.name ?? "",
+    fullName: "",
     dateOfBirth: "",
     nationality: "",
     phone: "",
@@ -33,6 +35,15 @@ export default function ApplyPage() {
     program: "",
     documents: [] as string[],
   });
+
+  useEffect(() => {
+    if (!currentStudent) return;
+    setForm((f) => ({
+      ...f,
+      fullName: f.fullName || currentStudent.name,
+      nationality: f.nationality || currentStudent.country || "",
+    }));
+  }, [currentStudent]);
 
   const update = (field: string, value: string | string[]) =>
     setForm((f) => ({ ...f, [field]: value }));
@@ -61,8 +72,16 @@ export default function ApplyPage() {
   };
 
   const handleSubmit = async () => {
-    await addApplication({
-      studentId: currentStudent?.id ?? "",
+    if (!currentStudent) {
+      setSubmitError("Your profile is still loading. Please wait a moment and try again.");
+      return;
+    }
+
+    setSubmitting(true);
+    setSubmitError("");
+
+    const result = await addApplication({
+      studentId: currentStudent.id,
       universityId: form.universityId,
       status: "submitted",
       steps: APPLICATION_STEPS.map((s) => ({
@@ -86,6 +105,14 @@ export default function ApplyPage() {
       documents: form.documents,
       notes: `Program: ${form.program}`,
     });
+
+    setSubmitting(false);
+
+    if (!result) {
+      setSubmitError("Failed to submit your application. Please try again.");
+      return;
+    }
+
     setSubmitted(true);
   };
 
@@ -116,7 +143,7 @@ export default function ApplyPage() {
           Back to Dashboard
         </Link>
         <h1 className="text-3xl font-bold text-white mb-1">University Application</h1>
-        <p className="text-slate-400">Complete all 6 steps. Your progress is saved automatically.</p>
+        <p className="text-slate-400">Complete all 6 steps to submit your application.</p>
       </motion.div>
 
       {/* Step indicator */}
@@ -248,7 +275,7 @@ export default function ApplyPage() {
 
             {STEP_IDS[step] === "documents" && (
               <div className="space-y-4">
-                <p className="text-sm text-slate-400">Upload required documents (simulated for demo):</p>
+                <p className="text-sm text-slate-400">Mark each required document as uploaded:</p>
                 {["Transcript", "Passport / ID", "Recommendation Letter"].map((doc) => {
                   const key = doc.toLowerCase().replace(/[^a-z]/g, "") + ".pdf";
                   const uploaded = form.documents.includes(key);
@@ -298,11 +325,17 @@ export default function ApplyPage() {
           </motion.div>
         </AnimatePresence>
 
+        {submitError && (
+          <p className="text-sm text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2 mt-6">
+            {submitError}
+          </p>
+        )}
+
         <div className="flex justify-between mt-8 pt-6 border-t border-white/5">
           <Button
             variant="ghost"
             onClick={() => setStep((s) => Math.max(0, s - 1))}
-            disabled={step === 0}
+            disabled={step === 0 || submitting}
           >
             <ArrowLeft className="w-4 h-4" />
             Previous
@@ -314,8 +347,8 @@ export default function ApplyPage() {
               <ArrowRight className="w-4 h-4" />
             </Button>
           ) : (
-            <Button onClick={handleSubmit} disabled={!canNext()}>
-              Submit Application
+            <Button onClick={handleSubmit} disabled={!canNext() || submitting}>
+              {submitting ? "Submitting..." : "Submit Application"}
               <Check className="w-4 h-4" />
             </Button>
           )}

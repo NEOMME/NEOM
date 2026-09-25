@@ -52,6 +52,14 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   const secret = req.headers.get("x-setup-secret");
   const expected = process.env.SETUP_SECRET;
+  const isProduction = process.env.NODE_ENV === "production";
+
+  if (isProduction && !expected) {
+    return NextResponse.json(
+      { error: "Setup is disabled in production. Configure SETUP_SECRET." },
+      { status: 403 }
+    );
+  }
 
   if (expected && secret !== expected) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

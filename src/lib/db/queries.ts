@@ -4,13 +4,11 @@ import {
   mapApplication,
   mapCategory,
   mapCountry,
-  mapEmailCampaign,
-  mapProfile,
   mapPromotion,
   mapUniversity,
 } from "./mappers";
 
-export async function fetchPlatformData() {
+export async function fetchPlatformData(studentId?: string) {
   const supabase = createAdminClient();
 
   const [
@@ -18,24 +16,25 @@ export async function fetchPlatformData() {
     categoriesRes,
     universitiesRes,
     uniCatsRes,
-    profilesRes,
     applicationsRes,
     promotionsRes,
-    emailsRes,
   ] = await Promise.all([
     supabase.from("countries").select("*").order("name"),
     supabase.from("categories").select("*").order("name"),
     supabase.from("universities").select("*").order("ranking"),
     supabase.from("university_categories").select("*"),
-    supabase.from("profiles").select("*").order("created_at"),
+    studentId
+      ? supabase
+          .from("applications")
+          .select(`*, profiles(name, email), universities(name, countries(name))`)
+          .eq("student_id", studentId)
+          .order("updated_at", { ascending: false })
+      : Promise.resolve({ data: [], error: null }),
     supabase
-      .from("applications")
-      .select(
-        `*, profiles(name, email), universities(name, countries(name))`
-      )
-      .order("updated_at", { ascending: false }),
-    supabase.from("promotions").select("*").order("start_date", { ascending: false }),
-    supabase.from("email_campaigns").select("*").order("created_at", { ascending: false }),
+      .from("promotions")
+      .select("*")
+      .eq("active", true)
+      .order("start_date", { ascending: false }),
   ]);
 
   const firstError =
@@ -43,10 +42,8 @@ export async function fetchPlatformData() {
     categoriesRes.error ??
     universitiesRes.error ??
     uniCatsRes.error ??
-    profilesRes.error ??
     applicationsRes.error ??
-    promotionsRes.error ??
-    emailsRes.error;
+    promotionsRes.error;
 
   if (firstError) throw firstError;
 
@@ -63,10 +60,10 @@ export async function fetchPlatformData() {
     universities: (universitiesRes.data ?? []).map((u) =>
       mapUniversity(u, uniCatMap.get(u.id) ?? [])
     ),
-    users: (profilesRes.data ?? []).map(mapProfile),
+    users: [],
     applications: (applicationsRes.data ?? []).map(mapApplication),
     promotions: (promotionsRes.data ?? []).map(mapPromotion),
-    emailCampaigns: (emailsRes.data ?? []).map(mapEmailCampaign),
+    emailCampaigns: [],
   };
 }
 

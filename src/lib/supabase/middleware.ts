@@ -31,26 +31,20 @@ export async function updateSession(request: NextRequest) {
 
   const path = request.nextUrl.pathname;
 
-  if (path.startsWith("/admin") || path.startsWith("/student/apply")) {
+  const authPages = path === "/login" || path === "/signup";
+  if (authPages && user) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/student";
+    url.search = "";
+    return NextResponse.redirect(url);
+  }
+
+  if (path.startsWith("/student")) {
     if (!user) {
       const url = request.nextUrl.clone();
       url.pathname = "/login";
       url.searchParams.set("redirect", path);
       return NextResponse.redirect(url);
-    }
-
-    if (path.startsWith("/admin")) {
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("role")
-        .eq("auth_id", user.id)
-        .maybeSingle();
-
-      if (profile?.role !== "admin") {
-        const url = request.nextUrl.clone();
-        url.pathname = "/student";
-        return NextResponse.redirect(url);
-      }
     }
   }
 

@@ -2,40 +2,40 @@
 
 import { createClient } from "@/lib/supabase/client";
 import { useNeomStore } from "@/lib/store";
+import type { User } from "@/lib/types";
 import { useEffect } from "react";
+
+async function loadProfile(): Promise<User | null> {
+  const res = await fetch("/api/profile");
+  if (!res.ok) return null;
+  return res.json();
+}
 
 export function AuthSync() {
   const setCurrentStudent = useNeomStore((s) => s.setCurrentStudent);
-  const users = useNeomStore((s) => s.users);
 
   useEffect(() => {
     const supabase = createClient();
 
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      if (!user) return;
+    const sync = async () => {
+      const profile = await loadProfile();
+      if (profile) setCurrentStudent(profile);
+    };
 
-      supabase
-        .from("profiles")
-        .select("*")
-        .eq("auth_id", user.id)
-        .maybeSingle()
-        .then(({ data: profile }) => {
-          if (profile) {
-            setCurrentStudent({
-              id: profile.id,
-              name: profile.name,
-              email: profile.email,
-              role: profile.role,
-              country: profile.country ?? undefined,
-              createdAt: profile.created_at?.split("T")[0] ?? "",
-            });
-          } else {
-            const match = users.find((u) => u.email === user.email);
-            if (match) setCurrentStudent(match);
-          }
-        });
+    sync();
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) {
+        sync();
+      } else {
+        setCurrentStudent(null);
+      }
     });
-  }, [setCurrentStudent, users]);
+
+    return () => subscription.unsubscribe();
+  }, [setCurrentStudent]);
 
   return null;
 }

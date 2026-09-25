@@ -2,7 +2,6 @@
 
 import { APPLICATION_STEPS } from "@/lib/data";
 import { motion } from "framer-motion";
-import { CheckCircle2 } from "lucide-react";
 
 export function Process() {
   return (
@@ -39,10 +38,7 @@ export function Process() {
                   <span className="text-sm font-bold text-cyan-400">{i + 1}</span>
                 </div>
                 <div className="glass rounded-2xl p-5 flex-1 hover:border-cyan-500/30 transition-colors">
-                  <div className="flex items-center gap-2 mb-1">
-                    <h3 className="font-semibold text-white">{step.title}</h3>
-                    {i < 2 && <CheckCircle2 className="w-4 h-4 text-emerald-400" />}
-                  </div>
+                  <h3 className="font-semibold text-white mb-1">{step.title}</h3>
                   <p className="text-sm text-slate-400">{step.description}</p>
                 </div>
               </motion.div>

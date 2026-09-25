@@ -13,11 +13,14 @@ function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirect = searchParams.get("redirect") ?? "/student";
+  const registered = searchParams.get("registered") === "1";
+  const authError = searchParams.get("error") === "auth";
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [resetSent, setResetSent] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -25,7 +28,7 @@ function LoginForm() {
     setError("");
 
     const supabase = createClient();
-    const { data, error: authError } = await supabase.auth.signInWithPassword({
+    const { error: authError } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
@@ -36,21 +39,32 @@ function LoginForm() {
       return;
     }
 
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("role")
-      .eq("auth_id", data.user.id)
-      .maybeSingle();
-
-    let dest = redirect;
-    if (profile?.role === "admin") {
-      dest = redirect.startsWith("/admin") ? redirect : "/admin";
-    } else if (redirect.startsWith("/admin")) {
-      dest = "/student";
-    }
-
+    const dest = redirect.startsWith("/student") ? redirect : "/student";
     router.push(dest);
     router.refresh();
+  };
+
+  const handleForgotPassword = async () => {
+    if (!email) {
+      setError("Enter your email address first.");
+      return;
+    }
+
+    setLoading(true);
+    setError("");
+
+    const supabase = createClient();
+    const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/api/auth/callback?next=/student`,
+    });
+
+    setLoading(false);
+    if (resetError) {
+      setError(resetError.message);
+      return;
+    }
+
+    setResetSent(true);
   };
 
   return (
@@ -62,6 +76,24 @@ function LoginForm() {
         <h1 className="text-2xl font-bold text-white">Sign in to Neom</h1>
         <p className="text-sm text-slate-400 mt-1">NEMP — AI-Powered Applications</p>
       </div>
+
+      {registered && (
+        <p className="text-sm text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 rounded-lg px-3 py-2 mb-4">
+          Account created. Sign in to continue.
+        </p>
+      )}
+
+      {authError && (
+        <p className="text-sm text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2 mb-4">
+          Sign in failed. Please try again or create a new account.
+        </p>
+      )}
+
+      {resetSent && (
+        <p className="text-sm text-cyan-400 bg-cyan-500/10 border border-cyan-500/20 rounded-lg px-3 py-2 mb-4">
+          Password reset link sent. Check your email.
+        </p>
+      )}
 
       <form onSubmit={handleLogin} className="space-y-4">
         <div>
@@ -76,7 +108,16 @@ function LoginForm() {
           />
         </div>
         <div>
-          <label className="block text-sm text-slate-400 mb-1.5">Password</label>
+          <div className="flex items-center justify-between mb-1.5">
+            <label className="block text-sm text-slate-400">Password</label>
+            <button
+              type="button"
+              onClick={handleForgotPassword}
+              className="text-xs text-cyan-400 hover:text-cyan-300"
+            >
+              Forgot password?
+            </button>
+          </div>
           <input
             type="password"
             value={password}
@@ -98,11 +139,14 @@ function LoginForm() {
         </Button>
       </form>
 
-      <div className="mt-6 pt-6 border-t border-white/5 text-center">
-        <p className="text-xs text-slate-500 mb-2">Demo accounts (after setup):</p>
-        <p className="text-xs text-slate-400">admin@neom.edu · ahmed@student.com</p>
-        <p className="text-xs text-slate-500">Password: NeomAdmin2026! / NeomStudent2026!</p>
-        <Link href="/" className="inline-block mt-4 text-sm text-cyan-400 hover:text-cyan-300">
+      <div className="mt-6 pt-6 border-t border-white/5 text-center space-y-3">
+        <p className="text-sm text-slate-400">
+          Don&apos;t have an account?{" "}
+          <Link href="/signup" className="text-cyan-400 hover:text-cyan-300">
+            Create one
+          </Link>
+        </p>
+        <Link href="/" className="inline-block text-sm text-slate-500 hover:text-cyan-400">
           ← Back to home
         </Link>
       </div>

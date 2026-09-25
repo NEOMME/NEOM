@@ -1,8 +1,9 @@
 "use client";
 
 import { Button } from "@/components/ui/Button";
+import { APPLICATION_STEPS } from "@/lib/data";
 import { motion } from "framer-motion";
-import { ArrowRight, Bot, Globe, Sparkles } from "lucide-react";
+import { ArrowRight, Bot, Sparkles } from "lucide-react";
 import Link from "next/link";
 
 export function Hero() {
@@ -32,16 +33,15 @@ export function Hero() {
           </p>
 
           <div className="flex flex-wrap gap-4 mb-12">
-            <Link href="/student/apply">
+            <Link href="/signup">
               <Button size="lg">
-                Start Your Application
+                Get Started
                 <ArrowRight className="w-5 h-5" />
               </Button>
             </Link>
-            <Link href="/student">
+            <Link href="/login">
               <Button variant="secondary" size="lg">
-                <Bot className="w-5 h-5" />
-                Talk to AI Assistant
+                Sign In
               </Button>
             </Link>
           </div>
@@ -66,52 +66,29 @@ export function Hero() {
           transition={{ duration: 0.8, delay: 0.2 }}
           className="relative"
         >
-          <div className="glass rounded-3xl p-8 glow-cyan animate-float">
+          <div className="glass rounded-3xl p-8 glow-cyan">
             <div className="flex items-center gap-3 mb-6">
               <div className="p-3 rounded-2xl bg-gradient-to-br from-cyan-500 to-violet-600">
-                <Globe className="w-6 h-6 text-white" />
+                <Bot className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h3 className="font-semibold text-white">Application Progress</h3>
-                <p className="text-xs text-slate-400">Step 3 of 6 — Academic Info</p>
+                <h3 className="font-semibold text-white">How it works</h3>
+                <p className="text-xs text-slate-400">A clear 6-step application process</p>
               </div>
             </div>
 
-            <div className="space-y-3 mb-6">
-              {[
-                { step: "Profile", done: true },
-                { step: "Destination", done: true },
-                { step: "Academic", done: false, active: true },
-                { step: "Programs", done: false },
-                { step: "Documents", done: false },
-                { step: "Review", done: false },
-              ].map((s) => (
-                <div key={s.step} className="flex items-center gap-3">
-                  <div
-                    className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold ${
-                      s.done
-                        ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
-                        : s.active
-                          ? "bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 glow-cyan"
-                          : "bg-slate-800 text-slate-500 border border-slate-700"
-                    }`}
-                  >
-                    {s.done ? "✓" : s.step[0]}
+            <div className="space-y-3">
+              {APPLICATION_STEPS.map((step, i) => (
+                <div key={step.id} className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-xs font-bold text-cyan-400">
+                    {i + 1}
                   </div>
-                  <span className={`text-sm ${s.active ? "text-cyan-400 font-medium" : s.done ? "text-slate-400" : "text-slate-600"}`}>
-                    {s.step}
-                  </span>
+                  <div>
+                    <p className="text-sm font-medium text-white">{step.title}</p>
+                    <p className="text-xs text-slate-500">{step.description}</p>
+                  </div>
                 </div>
               ))}
-            </div>
-
-            <div className="glass rounded-xl p-4 border border-cyan-500/20">
-              <div className="flex items-start gap-3">
-                <Bot className="w-5 h-5 text-cyan-400 shrink-0 mt-0.5" />
-                <p className="text-sm text-slate-300">
-                  &ldquo;Based on your profile, I recommend MIT and TU Munich for Engineering programs. Shall I help you compare them?&rdquo;
-                </p>
-              </div>
             </div>
           </div>
         </motion.div>

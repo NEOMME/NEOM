@@ -26,16 +26,14 @@ export function Navbar() {
           <Link href="#features" className="text-sm text-slate-400 hover:text-cyan-400 transition-colors">Features</Link>
           <Link href="#process" className="text-sm text-slate-400 hover:text-cyan-400 transition-colors">Process</Link>
           <Link href="#universities" className="text-sm text-slate-400 hover:text-cyan-400 transition-colors">Universities</Link>
-          <Link href="/student" className="text-sm text-slate-400 hover:text-cyan-400 transition-colors">Student Portal</Link>
-          <Link href="/admin" className="text-sm text-slate-400 hover:text-cyan-400 transition-colors">Admin</Link>
         </div>
 
         <div className="hidden md:flex items-center gap-3">
           <Link href="/login">
             <Button variant="secondary" size="sm">Sign In</Button>
           </Link>
-          <Link href="/student/apply">
-            <Button size="sm">Start Application</Button>
+          <Link href="/signup">
+            <Button size="sm">Get Started</Button>
           </Link>
         </div>
 
@@ -54,10 +52,10 @@ export function Navbar() {
           >
             <Link href="#features" className="block text-sm text-slate-400 py-2" onClick={() => setOpen(false)}>Features</Link>
             <Link href="#process" className="block text-sm text-slate-400 py-2" onClick={() => setOpen(false)}>Process</Link>
-            <Link href="/student" className="block text-sm text-slate-400 py-2" onClick={() => setOpen(false)}>Student Portal</Link>
-            <Link href="/admin" className="block text-sm text-slate-400 py-2" onClick={() => setOpen(false)}>Admin</Link>
-            <Link href="/student/apply" onClick={() => setOpen(false)}>
-              <Button className="w-full" size="sm">Start Application</Button>
+            <Link href="#universities" className="block text-sm text-slate-400 py-2" onClick={() => setOpen(false)}>Universities</Link>
+            <Link href="/login" className="block text-sm text-slate-400 py-2" onClick={() => setOpen(false)}>Sign In</Link>
+            <Link href="/signup" onClick={() => setOpen(false)}>
+              <Button className="w-full" size="sm">Get Started</Button>
             </Link>
           </motion.div>
         )}

@@ -1,0 +1,39 @@
+import { createClient } from "@/lib/supabase/server";
+import type { User } from "@/lib/types";
+
+export async function getSessionUser() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+    error,
+  } = await supabase.auth.getUser();
+
+  if (error || !user) return null;
+  return user;
+}
+
+export async function getCurrentProfile(): Promise<User | null> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) return null;
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("*")
+    .eq("auth_id", user.id)
+    .maybeSingle();
+
+  if (!profile) return null;
+
+  return {
+    id: profile.id,
+    name: profile.name,
+    email: profile.email,
+    role: profile.role,
+    country: profile.country ?? undefined,
+    createdAt: profile.created_at?.split("T")[0] ?? "",
+  };
+}

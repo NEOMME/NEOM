@@ -101,12 +101,13 @@ create trigger applications_updated_at
 create or replace function public.handle_new_user()
 returns trigger as $$
 begin
-  insert into public.profiles (auth_id, name, email, role)
+  insert into public.profiles (auth_id, name, email, role, country)
   values (
     new.id,
     coalesce(new.raw_user_meta_data->>'name', split_part(new.email, '@', 1)),
     new.email,
-    coalesce(new.raw_user_meta_data->>'role', 'student')
+    coalesce(new.raw_user_meta_data->>'role', 'student'),
+    nullif(new.raw_user_meta_data->>'country', '')
   );
   return new;
 end;

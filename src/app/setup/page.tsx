@@ -58,7 +58,7 @@ export default function SetupPage() {
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-3xl font-bold text-white mb-1">Neom Setup</h1>
-            <p className="text-slate-400">Complete these steps to configure everything.</p>
+            <p className="text-slate-400">One-time platform configuration (developer use).</p>
           </div>
           <Button variant="ghost" size="sm" onClick={refresh}>
             <RefreshCw className="w-4 h-4" />
@@ -134,10 +134,10 @@ export default function SetupPage() {
 
         <Card className="mb-6">
           <h2 className="font-semibold text-white mb-3">
-            Step {status?.tablesReady ? "2" : "3"} — Seed Demo Data
+            Step {status?.tablesReady ? "2" : "3"} — Seed Platform Data
           </h2>
           <p className="text-sm text-slate-400 mb-4">
-            Creates demo users, 8 universities, sample applications, promotions, and email campaigns.
+            Loads countries, categories, partner universities, and promotions.
           </p>
           <Button onClick={runSeed} disabled={loading || !status?.tablesReady}>
             {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
@@ -155,16 +155,17 @@ export default function SetupPage() {
         </Card>
 
         <Card className="mb-6">
-          <h2 className="font-semibold text-white mb-3">Demo Login</h2>
-          <div className="text-sm text-slate-400 space-y-1">
-            <p><strong className="text-white">Admin:</strong> admin@neom.edu / NeomAdmin2026!</p>
-            <p><strong className="text-white">Student:</strong> ahmed@student.com / NeomStudent2026!</p>
-          </div>
+          <h2 className="font-semibold text-white mb-3">Go Live</h2>
+          <p className="text-sm text-slate-400">
+            Once setup is complete, users can create accounts at{" "}
+            <Link href="/signup" className="text-cyan-400 hover:text-cyan-300">/signup</Link>{" "}
+            and start applying.
+          </p>
         </Card>
 
         <div className="flex flex-wrap gap-4">
-          <Link href="/login">
-            <Button variant="secondary">Go to Login</Button>
+          <Link href="/signup">
+            <Button>Get Started</Button>
           </Link>
           <a href={productionUrl} target="_blank" rel="noopener noreferrer">
             <Button variant="secondary">

@@ -34,7 +34,6 @@ export default function StudentDashboard() {
   const myApps = applications.filter(
     (a) => a.studentId === currentStudent?.id
   );
-  const allApps = myApps.length > 0 ? myApps : applications.slice(0, 1);
 
   const handleSend = useCallback(
     async (message: string) => {
@@ -89,7 +88,7 @@ export default function StudentDashboard() {
           {
             icon: FileText,
             label: "Applications",
-            value: allApps.length,
+            value: myApps.length,
             color: "text-cyan-400",
           },
           {
@@ -101,7 +100,7 @@ export default function StudentDashboard() {
           {
             icon: Clock,
             label: "Pending Steps",
-            value: allApps.reduce(
+            value: myApps.reduce(
               (acc, a) => acc + a.steps.filter((s) => !s.completed).length,
               0
             ),
@@ -135,7 +134,7 @@ export default function StudentDashboard() {
               </Link>
             </div>
 
-            {allApps.length === 0 ? (
+            {myApps.length === 0 ? (
               <div className="text-center py-12">
                 <FileText className="w-12 h-12 text-slate-600 mx-auto mb-3" />
                 <p className="text-slate-400 mb-4">No applications yet</p>
@@ -145,7 +144,7 @@ export default function StudentDashboard() {
               </div>
             ) : (
               <div className="space-y-4">
-                {allApps.map((app) => {
+                {myApps.map((app) => {
                   const completedSteps = app.steps.filter((s) => s.completed).length;
                   const progress = (completedSteps / app.steps.length) * 100;
 

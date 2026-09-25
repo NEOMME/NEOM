@@ -4,7 +4,6 @@ import {
   NEOM_KNOWLEDGE,
   universities,
 } from "./data";
-import type { Application, UniversityCategory } from "./types";
 
 export type AIProvider = "groq" | "deepseek";
 
@@ -35,31 +34,6 @@ Be clear, encouraging, and specific. Use the context below to give accurate answ
 If asked about something not in context, say so honestly and suggest contacting support@neom.edu.
 
 ${buildContext()}`;
-
-function buildAdminContext(
-  apps: Application[],
-  cats: UniversityCategory[]
-) {
-  const appSummary = apps
-    .map(
-      (a) =>
-        `[${a.id}] ${a.studentName} → ${a.universityName} (${a.countryName}) — Status: ${a.status}`
-    )
-    .join("\n");
-
-  const catSummary = cats.map((c) => `[${c.id}] ${c.name}`).join("\n");
-
-  return `${buildContext()}\n\nCurrent Applications:\n${appSummary || "None"}\n\nCurrent Categories:\n${catSummary}`;
-}
-
-const ADMIN_SYSTEM = (apps: Application[], cats: UniversityCategory[]) =>
-  `You are Neom Admin AI Agent — an intelligent assistant for platform administrators.
-You can help manage applications, create categories, research universities, analyze data, and search the platform.
-When asked to create a category, provide the exact JSON format: {"name":"...","description":"...","icon":"IconName","color":"#hex"}
-When asked to update application status, specify the application ID and new status.
-Be professional, data-driven, and actionable.
-
-${buildAdminContext(apps, cats)}`;
 
 async function callGroq(messages: AIMessage[]) {
   const apiKey = process.env.GROQ_API_KEY;
@@ -132,28 +106,6 @@ export async function chatStudent(
   return fallbackStudentResponse(userMessage);
 }
 
-export async function chatAdmin(
-  userMessage: string,
-  history: { role: "user" | "assistant"; content: string }[],
-  apps: Application[],
-  cats: UniversityCategory[]
-): Promise<string> {
-  const messages: AIMessage[] = [
-    { role: "system", content: ADMIN_SYSTEM(apps, cats) },
-    ...history.map((m) => ({ role: m.role, content: m.content })),
-    { role: "user", content: userMessage },
-  ];
-
-  const provider = getProvider();
-  const response =
-    provider === "deepseek"
-      ? await callDeepSeek(messages)
-      : await callGroq(messages);
-
-  if (response) return response;
-  return fallbackAdminResponse(userMessage, apps, cats);
-}
-
 function fallbackStudentResponse(message: string): string {
   const lower = message.toLowerCase();
 
@@ -200,60 +152,4 @@ function fallbackStudentResponse(message: string): string {
   }
 
   return `I'm Neom AI, here to help you navigate your university application journey! I can tell you about:\n\n• Our services and application process\n• Partner universities and countries\n• Program categories and deadlines\n• Step-by-step application guidance\n\nWhat would you like to know? (Tip: Connect a Groq or DeepSeek API key for full AI capabilities.)`;
-}
-
-function fallbackAdminResponse(
-  message: string,
-  apps: Application[],
-  cats: UniversityCategory[]
-): string {
-  const lower = message.toLowerCase();
-
-  if (lower.includes("application") || lower.includes("status")) {
-    const summary = apps
-      .map((a) => `• [${a.id}] **${a.studentName}** → ${a.universityName} — \`${a.status}\``)
-      .join("\n");
-    const counts = {
-      submitted: apps.filter((a) => a.status === "submitted").length,
-      under_review: apps.filter((a) => a.status === "under_review").length,
-      accepted: apps.filter((a) => a.status === "accepted").length,
-      rejected: apps.filter((a) => a.status === "rejected").length,
-      draft: apps.filter((a) => a.status === "draft").length,
-    };
-    return `**Application Overview** (${apps.length} total)\n\nSubmitted: ${counts.submitted} | Under Review: ${counts.under_review} | Accepted: ${counts.accepted} | Rejected: ${counts.rejected} | Draft: ${counts.draft}\n\n${summary}\n\nTo update a status, use the Applications panel or tell me the app ID and desired status.`;
-  }
-
-  if (lower.includes("categor") && (lower.includes("create") || lower.includes("add") || lower.includes("new"))) {
-    return `To create a new category, I'll need:\n\n• **Name** (e.g., "Environmental Studies")\n• **Description**\n• **Icon** (Lucide icon name: Cpu, Heart, Atom, etc.)\n• **Color** (hex code)\n\nExample: "Create a category for Environmental Studies with green color #22c55e"\n\nCurrent categories (${cats.length}): ${cats.map((c) => c.name).join(", ")}`;
-  }
-
-  if (lower.includes("categor") || lower.includes("list categor")) {
-    const list = cats.map((c) => `• **${c.name}** [${c.id}] — ${c.description}`).join("\n");
-    return `**University Categories** (${cats.length}):\n\n${list}`;
-  }
-
-  if (lower.includes("research") || lower.includes("universit")) {
-    const list = universities
-      .filter((u) => u.published)
-      .map((u) => {
-        const country = countries.find((c) => c.id === u.countryId);
-        return `• **${u.name}** (${country?.name}) — Rank #${u.ranking}, ${u.tuition}`;
-      })
-      .join("\n");
-    return `**University Research Summary:**\n\n${list}\n\nAsk me to compare specific universities or analyze trends.`;
-  }
-
-  if (lower.includes("search") || lower.includes("find")) {
-    return `I can search across:\n• **Applications** — by student name, university, or status\n• **Universities** — by country, category, or program\n• **Users** — by name or email\n• **Categories** — by name or description\n\nWhat would you like me to search for?`;
-  }
-
-  if (lower.includes("promot") || lower.includes("email")) {
-    return `**Marketing Tools Available:**\n\n• **Promotions** — Create and manage discount campaigns\n• **Email Campaigns** — Draft, schedule, and send bulk emails\n\nNavigate to the Promotions or Email tabs in the sidebar to manage these. I can help draft campaign content — just ask!`;
-  }
-
-  if (lower.includes("help") || lower.includes("what can you")) {
-    return `I'm the **Neom Admin AI Agent**. I can help you:\n\n• **Manage applications** — view, filter, update statuses\n• **Create categories** — add new university groupings\n• **Research universities** — compare partners, analyze data\n• **Search everything** — find apps, users, universities\n• **Draft promotions** — help write campaign content\n\nWhat task can I assist with? (Connect GROQ_API_KEY or DEEPSEEK_API_KEY for full AI power.)`;
-  }
-
-  return `Admin Agent ready. Current stats: **${apps.length} applications**, **${cats.length} categories**, **${universities.length} universities**. Ask me to manage applications, create categories, research universities, or search the platform.`;
 }
