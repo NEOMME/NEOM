@@ -2,7 +2,6 @@
 
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
-import { createClient } from "@/lib/supabase/client";
 import { GraduationCap } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -26,14 +25,16 @@ function LoginForm() {
     setLoading(true);
     setError("");
 
-    const supabase = createClient();
-    const { error: signInError } = await supabase.auth.signInWithPassword({
-      email,
-      password,
+    const res = await fetch("/api/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }),
     });
 
-    if (signInError) {
-      setError(signInError.message);
+    const data = await res.json();
+
+    if (!res.ok) {
+      setError(data.error ?? "Sign in failed.");
       setLoading(false);
       return;
     }
@@ -52,14 +53,17 @@ function LoginForm() {
     setLoading(true);
     setError("");
 
-    const supabase = createClient();
-    const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/api/auth/callback?next=/student`,
+    const res = await fetch("/api/auth/reset-password", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email }),
     });
 
+    const data = await res.json();
     setLoading(false);
-    if (resetError) {
-      setError(resetError.message);
+
+    if (!res.ok) {
+      setError(data.error ?? "Could not send reset email.");
       return;
     }
 

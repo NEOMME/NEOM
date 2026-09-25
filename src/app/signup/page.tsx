@@ -2,7 +2,6 @@
 
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
-import { createClient } from "@/lib/supabase/client";
 import { GraduationCap } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -19,8 +18,6 @@ export default function SignupPage() {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [needsConfirmation, setNeedsConfirmation] = useState(false);
-
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -38,36 +35,27 @@ export default function SignupPage() {
       return;
     }
 
-    const supabase = createClient();
-    const redirectTo = `${window.location.origin}/api/auth/callback?next=/student`;
-
-    const { data, error: authError } = await supabase.auth.signUp({
-      email: form.email,
-      password: form.password,
-      options: {
-        emailRedirectTo: redirectTo,
-        data: {
-          name: form.name,
-          role: "student",
-          country: form.country || undefined,
-        },
-      },
+    const res = await fetch("/api/auth/signup", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(form),
     });
 
-    if (authError) {
-      setError(authError.message);
+    const data = await res.json();
+
+    if (!res.ok) {
+      setError(data.error ?? "Could not create account.");
       setLoading(false);
       return;
     }
 
-    if (data.session) {
-      router.push("/student");
-      router.refresh();
+    if (data.needsLogin) {
+      router.push("/login?registered=1");
       return;
     }
 
-    setNeedsConfirmation(true);
-    setLoading(false);
+    router.push("/student");
+    router.refresh();
   };
 
   return (
@@ -81,41 +69,26 @@ export default function SignupPage() {
           <p className="text-sm text-slate-500 mt-1">Start your university application</p>
         </div>
 
-        {needsConfirmation ? (
-          <div className="text-center py-6 space-y-3">
-            <p className="text-emerald-700 font-medium">Check your email</p>
-            <p className="text-sm text-slate-600">
-              We sent a confirmation link to <span className="font-medium text-slate-900">{form.email}</span>.
-              Click it to activate your account, then sign in.
-            </p>
-            <Link href="/login" className="inline-block text-sm text-blue-700 hover:text-blue-800 font-medium">
-              Go to sign in
-            </Link>
-          </div>
-        ) : (
-          <form onSubmit={handleSignup} className="space-y-4">
-            <Field label="Full name" value={form.name} onChange={(v) => setForm({ ...form, name: v })} required placeholder="Your full name" />
-            <Field label="Email" type="email" value={form.email} onChange={(v) => setForm({ ...form, email: v })} required placeholder="you@email.com" />
-            <Field label="Password" type="password" value={form.password} onChange={(v) => setForm({ ...form, password: v })} required placeholder="At least 8 characters" />
-            <Field label="Confirm password" type="password" value={form.confirmPassword} onChange={(v) => setForm({ ...form, confirmPassword: v })} required placeholder="Repeat your password" />
-            <Field label="Country (optional)" value={form.country} onChange={(v) => setForm({ ...form, country: v })} placeholder="Your country" />
+        <form onSubmit={handleSignup} className="space-y-4">
+          <Field label="Full name" value={form.name} onChange={(v) => setForm({ ...form, name: v })} required placeholder="Your full name" />
+          <Field label="Email" type="email" value={form.email} onChange={(v) => setForm({ ...form, email: v })} required placeholder="you@email.com" />
+          <Field label="Password" type="password" value={form.password} onChange={(v) => setForm({ ...form, password: v })} required placeholder="At least 8 characters" />
+          <Field label="Confirm password" type="password" value={form.confirmPassword} onChange={(v) => setForm({ ...form, confirmPassword: v })} required placeholder="Repeat your password" />
+          <Field label="Country (optional)" value={form.country} onChange={(v) => setForm({ ...form, country: v })} placeholder="Your country" />
 
-            {error && (
-              <p className="text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg px-3 py-2">{error}</p>
-            )}
+          {error && (
+            <p className="text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg px-3 py-2">{error}</p>
+          )}
 
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Creating account..." : "Create Account"}
-            </Button>
-          </form>
-        )}
+          <Button type="submit" className="w-full" disabled={loading}>
+            {loading ? "Creating account..." : "Create Account"}
+          </Button>
+        </form>
 
-        {!needsConfirmation && (
-          <p className="text-center text-sm text-slate-600 mt-6">
-            Already have an account?{" "}
-            <Link href="/login" className="text-blue-700 hover:text-blue-800 font-medium">Sign in</Link>
-          </p>
-        )}
+        <p className="text-center text-sm text-slate-600 mt-6">
+          Already have an account?{" "}
+          <Link href="/login" className="text-blue-700 hover:text-blue-800 font-medium">Sign in</Link>
+        </p>
       </Card>
     </main>
   );
