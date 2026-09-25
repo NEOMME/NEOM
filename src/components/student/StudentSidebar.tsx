@@ -1,6 +1,7 @@
 "use client";
 
 import { createClient } from "@/lib/supabase/client";
+import { useNeomStore } from "@/lib/store";
 import { cn } from "@/lib/utils";
 import {
   FileText,
@@ -9,6 +10,7 @@ import {
   Home,
   LayoutDashboard,
   LogOut,
+  Shield,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -23,6 +25,7 @@ const links = [
 export function StudentSidebar() {
   const pathname = usePathname();
   const router = useRouter();
+  const { currentStudent } = useNeomStore();
 
   const handleSignOut = async () => {
     const supabase = createClient();
@@ -66,6 +69,15 @@ export function StudentSidebar() {
       </nav>
 
       <div className="p-4 border-t border-slate-200 space-y-1">
+        {currentStudent?.role === "admin" && (
+          <Link
+            href="/admin"
+            className="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm text-blue-700 hover:bg-blue-50 transition-colors font-medium"
+          >
+            <Shield className="w-4 h-4" />
+            Admin Portal
+          </Link>
+        )}
         <Link
           href="/"
           className="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-colors"

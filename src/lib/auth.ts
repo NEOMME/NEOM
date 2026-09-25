@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import type { User } from "@/lib/types";
+import { NextResponse } from "next/server";
 
 export async function getSessionUser() {
   const supabase = await createClient();
@@ -36,4 +37,27 @@ export async function getCurrentProfile(): Promise<User | null> {
     country: profile.country ?? undefined,
     createdAt: profile.created_at?.split("T")[0] ?? "",
   };
+}
+
+export async function requireProfile(): Promise<User | NextResponse> {
+  const profile = await getCurrentProfile();
+  if (!profile) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  return profile;
+}
+
+export async function requireAdmin(): Promise<User | NextResponse> {
+  const profile = await getCurrentProfile();
+  if (!profile) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  if (profile.role !== "admin") {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+  return profile;
+}
+
+export function isNextResponse(value: unknown): value is NextResponse {
+  return value instanceof NextResponse;
 }

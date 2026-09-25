@@ -39,11 +39,25 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  if (path.startsWith("/student")) {
+  if (path.startsWith("/student") || path.startsWith("/admin")) {
     if (!user) {
       const url = request.nextUrl.clone();
       url.pathname = "/login";
       url.searchParams.set("redirect", path);
+      return NextResponse.redirect(url);
+    }
+  }
+
+  if (path.startsWith("/admin") && user) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("auth_id", user.id)
+      .maybeSingle();
+
+    if (profile?.role !== "admin") {
+      const url = request.nextUrl.clone();
+      url.pathname = "/student";
       return NextResponse.redirect(url);
     }
   }

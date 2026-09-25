@@ -45,7 +45,9 @@ Also set **Site URL** to `https://neom-production.up.railway.app`.
    NEXT_PUBLIC_SITE_URL=http://localhost:3000
    ```
 
-2. **Run migration** — Open [Supabase SQL Editor](https://supabase.com/dashboard/project/ytdhzjdwfhtxzmobikzp/sql/new), paste `supabase/migrations/001_initial_schema.sql`, and click **Run**.
+2. **Run migrations** — Open Supabase SQL Editor and run both files in order:
+   - `supabase/migrations/001_initial_schema.sql`
+   - `supabase/migrations/002_agent_features.sql`
 
    Or with a database connection string:
    ```bash
@@ -61,15 +63,48 @@ Also set **Site URL** to `https://neom-production.up.railway.app`.
 
 > **Security:** Never commit `.env.local`. The service role key must stay server-side only.
 
-## AI Configuration
+## AI Agent System
+
+Three specialized agents power the platform:
+
+| Agent | Route | Capabilities |
+|-------|-------|--------------|
+| **Student Advisor** | `/student`, `/student/apply` | Search universities, recommendations, track applications |
+| **Research Agent** | `/admin/research` | Web research → staging → human approval |
+| **Admin AI** | `/admin/ai` | Review apps, stats, draft emails |
+
+### AI Configuration
+
+**Recommended — Qwen3 on Railway:**
 
 ```env
-AI_PROVIDER=groq          # or "deepseek"
-GROQ_API_KEY=your_key     # https://console.groq.com
-DEEPSEEK_API_KEY=your_key # https://platform.deepseek.com
+AI_PROVIDER=qwen
+QWEN_API_URL=https://your-qwen-service.up.railway.app/v1
+QWEN_MODEL=qwen3
+QWEN_API_KEY=             # optional
 ```
 
-The platform works without API keys using intelligent fallback responses.
+Set these in **Railway → Neom service → Variables**. The student assistant, admin AI, and research agent all use this endpoint.
+
+**Fallback providers:**
+
+```env
+GROQ_API_KEY=your_key     # https://console.groq.com
+DEEPSEEK_API_KEY=your_key # https://platform.deepseek.com
+TAVILY_API_KEY=your_key   # optional — live web research
+```
+
+The platform works without any AI configured using intelligent fallback responses.
+
+### Admin Access
+
+Set a user's role to `admin` in Supabase:
+
+```sql
+UPDATE profiles SET role = 'admin' WHERE email = 'your@email.com';
+```
+
+Then visit `/admin`.
 
 ## Tech Stack
 

@@ -38,8 +38,10 @@ interface NeomStore extends PlatformData {
   loading: boolean;
   error: string | null;
   hydrated: boolean;
+  chatLoaded: boolean;
 
   hydrate: () => Promise<void>;
+  loadStudentChat: () => Promise<void>;
   setCurrentStudent: (user: User | null) => void;
   addApplication: (
     application: Omit<
@@ -53,7 +55,9 @@ interface NeomStore extends PlatformData {
       | "studentEmail"
     >
   ) => Promise<Application | null>;
+  updateApplication: (id: string, updates: Partial<Application>) => Promise<Application | null>;
   addStudentMessage: (message: ChatMessage) => void;
+  setStudentChat: (messages: ChatMessage[]) => void;
 }
 
 export const useNeomStore = create<NeomStore>()((set, get) => ({
@@ -63,6 +67,7 @@ export const useNeomStore = create<NeomStore>()((set, get) => ({
   loading: false,
   error: null,
   hydrated: false,
+  chatLoaded: false,
 
   hydrate: async () => {
     if (get().hydrated) return;
@@ -98,6 +103,19 @@ export const useNeomStore = create<NeomStore>()((set, get) => ({
     }
   },
 
+  loadStudentChat: async () => {
+    if (get().chatLoaded) return;
+    try {
+      const res = await fetch("/api/ai/student");
+      if (res.ok) {
+        const data = await res.json();
+        set({ studentChat: data.history ?? [], chatLoaded: true });
+      }
+    } catch {
+      set({ chatLoaded: true });
+    }
+  },
+
   setCurrentStudent: (user) => set({ currentStudent: user }),
 
   addApplication: async (application) => {
@@ -110,10 +128,33 @@ export const useNeomStore = create<NeomStore>()((set, get) => ({
     if (!res.ok) return null;
 
     const created: Application = await res.json();
-    set((s) => ({ applications: [created, ...s.applications] }));
+    set((s) => ({
+      applications: [
+        created,
+        ...s.applications.filter((a) => a.id !== created.id),
+      ],
+    }));
     return created;
+  },
+
+  updateApplication: async (id, updates) => {
+    const res = await fetch(`/api/applications/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(updates),
+    });
+
+    if (!res.ok) return null;
+
+    const updated: Application = await res.json();
+    set((s) => ({
+      applications: s.applications.map((a) => (a.id === id ? updated : a)),
+    }));
+    return updated;
   },
 
   addStudentMessage: (message) =>
     set((s) => ({ studentChat: [...s.studentChat, message] })),
+
+  setStudentChat: (messages) => set({ studentChat: messages }),
 }));

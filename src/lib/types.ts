@@ -105,3 +105,40 @@ export interface ChatMessage {
   content: string;
   timestamp: string;
 }
+
+export interface StagingUniversity {
+  id: string;
+  name: string;
+  countryId?: string;
+  categoryIds: string[];
+  description: string;
+  tuition: string;
+  ranking: number;
+  programs: string[];
+  deadline: string;
+  sourceUrl?: string;
+  researchNotes: string;
+  status: "pending" | "approved" | "rejected";
+  researchedBy?: string;
+  reviewedBy?: string;
+  createdAt: string;
+  reviewedAt?: string;
+}
+
+export interface Notification {
+  id: string;
+  type: string;
+  title: string;
+  body: string;
+  metadata: Record<string, unknown>;
+  read: boolean;
+  createdAt: string;
+}
+
+export interface UniversitySearchFilters {
+  countryId?: string;
+  categoryId?: string;
+  programKeyword?: string;
+  maxTuition?: number;
+  publishedOnly?: boolean;
+}

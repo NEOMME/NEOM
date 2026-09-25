@@ -4,6 +4,7 @@ import type {
   Country,
   EmailCampaign,
   Promotion,
+  StagingUniversity,
   University,
   UniversityCategory,
   User,
@@ -136,6 +137,31 @@ export function mapPromotion(row: {
     active: row.active,
     startDate: row.start_date,
     endDate: row.end_date,
+  };
+}
+
+export function mapStagingUniversity(row: Record<string, unknown>): StagingUniversity {
+  return {
+    id: row.id as string,
+    name: row.name as string,
+    countryId: (row.country_id as string) ?? undefined,
+    categoryIds: Array.isArray(row.category_ids)
+      ? (row.category_ids as string[])
+      : [],
+    description: row.description as string,
+    tuition: row.tuition as string,
+    ranking: row.ranking as number,
+    programs: Array.isArray(row.programs) ? (row.programs as string[]) : [],
+    deadline: row.deadline as string,
+    sourceUrl: (row.source_url as string) ?? undefined,
+    researchNotes: row.research_notes as string,
+    status: row.status as StagingUniversity["status"],
+    researchedBy: (row.researched_by as string) ?? undefined,
+    reviewedBy: (row.reviewed_by as string) ?? undefined,
+    createdAt: (row.created_at as string).split("T")[0],
+    reviewedAt: row.reviewed_at
+      ? (row.reviewed_at as string).split("T")[0]
+      : undefined,
   };
 }
 
