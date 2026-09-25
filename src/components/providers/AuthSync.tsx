@@ -1,6 +1,5 @@
 "use client";
 
-import { createClient } from "@/lib/supabase/client";
 import { useNeomStore } from "@/lib/store";
 import type { User } from "@/lib/types";
 import { useEffect } from "react";
@@ -15,26 +14,9 @@ export function AuthSync() {
   const setCurrentStudent = useNeomStore((s) => s.setCurrentStudent);
 
   useEffect(() => {
-    const supabase = createClient();
-
-    const sync = async () => {
-      const profile = await loadProfile();
+    loadProfile().then((profile) => {
       if (profile) setCurrentStudent(profile);
-    };
-
-    sync();
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session?.user) {
-        sync();
-      } else {
-        setCurrentStudent(null);
-      }
     });
-
-    return () => subscription.unsubscribe();
   }, [setCurrentStudent]);
 
   return null;

@@ -1,6 +1,5 @@
 "use client";
 
-import { createClient } from "@/lib/supabase/client";
 import { useNeomStore } from "@/lib/store";
 import { cn } from "@/lib/utils";
 import {
@@ -28,9 +27,9 @@ export function StudentSidebar() {
   const { currentStudent } = useNeomStore();
 
   const handleSignOut = async () => {
-    const supabase = createClient();
-    await supabase.auth.signOut();
+    await fetch("/api/auth/logout", { method: "POST" });
     router.push("/login");
+    router.refresh();
   };
 
   const isActive = (link: (typeof links)[number]) => {

@@ -1,3 +1,4 @@
+import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import type { User } from "@/lib/types";
 import { NextResponse } from "next/server";
@@ -13,22 +14,14 @@ export async function getSessionUser() {
   return user;
 }
 
-export async function getCurrentProfile(): Promise<User | null> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) return null;
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("auth_id", user.id)
-    .maybeSingle();
-
-  if (!profile) return null;
-
+function mapProfileRow(profile: {
+  id: string;
+  name: string;
+  email: string;
+  role: User["role"];
+  country: string | null;
+  created_at: string | null;
+}): User {
   return {
     id: profile.id,
     name: profile.name,
@@ -37,6 +30,52 @@ export async function getCurrentProfile(): Promise<User | null> {
     country: profile.country ?? undefined,
     createdAt: profile.created_at?.split("T")[0] ?? "",
   };
+}
+
+export async function getCurrentProfile(): Promise<User | null> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) return null;
+
+  const admin = createAdminClient();
+  const { data: profile } = await admin
+    .from("profiles")
+    .select("*")
+    .eq("auth_id", user.id)
+    .maybeSingle();
+
+  if (profile) return mapProfileRow(profile);
+
+  const name =
+    (user.user_metadata?.name as string | undefined) ??
+    user.email?.split("@")[0] ??
+    "Student";
+  const country = (user.user_metadata?.country as string | undefined) ?? null;
+
+  const { data: created } = await admin
+    .from("profiles")
+    .insert({
+      auth_id: user.id,
+      name,
+      email: user.email!,
+      role: "student",
+      country,
+    })
+    .select("*")
+    .single();
+
+  if (created) return mapProfileRow(created);
+
+  const { data: fallback } = await admin
+    .from("profiles")
+    .select("*")
+    .eq("auth_id", user.id)
+    .maybeSingle();
+
+  return fallback ? mapProfileRow(fallback) : null;
 }
 
 export async function requireProfile(): Promise<User | NextResponse> {
