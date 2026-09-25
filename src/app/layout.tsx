@@ -13,9 +13,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Neom — NEMP | AI-Powered University Applications",
+  title: "Neom — University Application Platform",
   description:
-    "Apply to world-class universities with AI guidance. Neom provides a smooth, clear, step-by-step application process supported by Groq and DeepSeek AI.",
+    "Apply to partner universities worldwide with a clear, guided application process.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
@@ -24,7 +24,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col bg-[#030712] text-slate-100">
+      <body className="min-h-full flex flex-col bg-slate-50 text-slate-900">
         {children}
       </body>
     </html>

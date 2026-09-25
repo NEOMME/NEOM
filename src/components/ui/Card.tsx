@@ -7,12 +7,11 @@ interface CardProps {
   glow?: boolean;
 }
 
-export function Card({ children, className, glow }: CardProps) {
+export function Card({ children, className }: CardProps) {
   return (
     <div
       className={cn(
-        "glass rounded-2xl p-6 transition-all duration-300 hover:border-cyan-500/30",
-        glow && "glow-cyan",
+        "bg-white rounded-xl border border-slate-200 p-6 shadow-sm",
         className
       )}
     >

@@ -1,19 +1,18 @@
 @import "tailwindcss";
 
 :root {
-  --background: #030712;
-  --foreground: #f1f5f9;
-  --card: rgba(15, 23, 42, 0.6);
-  --card-border: rgba(6, 182, 212, 0.15);
-  --primary: #06b6d4;
-  --primary-glow: rgba(6, 182, 212, 0.4);
-  --secondary: #8b5cf6;
-  --secondary-glow: rgba(139, 92, 246, 0.4);
-  --accent: #22d3ee;
+  --background: #f8fafc;
+  --foreground: #0f172a;
+  --card: #ffffff;
+  --card-border: #e2e8f0;
+  --primary: #1d4ed8;
+  --primary-hover: #1e40af;
+  --secondary: #0f766e;
   --muted: #64748b;
-  --success: #10b981;
-  --warning: #f59e0b;
-  --danger: #ef4444;
+  --surface: #f1f5f9;
+  --success: #059669;
+  --warning: #d97706;
+  --danger: #dc2626;
 }
 
 @theme inline {
@@ -21,7 +20,6 @@
   --color-foreground: var(--foreground);
   --color-primary: var(--primary);
   --color-secondary: var(--secondary);
-  --color-accent: var(--accent);
   --color-muted: var(--muted);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
@@ -44,36 +42,18 @@ body {
 
 .glass {
   background: var(--card);
-  backdrop-filter: blur(20px);
   border: 1px solid var(--card-border);
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
 }
 
 .glass-strong {
-  background: rgba(15, 23, 42, 0.85);
-  backdrop-filter: blur(24px);
-  border: 1px solid rgba(6, 182, 212, 0.2);
-}
-
-.glow-cyan {
-  box-shadow: 0 0 40px var(--primary-glow), 0 0 80px rgba(6, 182, 212, 0.1);
-}
-
-.glow-purple {
-  box-shadow: 0 0 40px var(--secondary-glow), 0 0 80px rgba(139, 92, 246, 0.1);
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
 }
 
 .text-gradient {
-  background: linear-gradient(135deg, #06b6d4 0%, #8b5cf6 50%, #22d3ee 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-.grid-bg {
-  background-image:
-    linear-gradient(rgba(6, 182, 212, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(6, 182, 212, 0.03) 1px, transparent 1px);
-  background-size: 60px 60px;
+  color: var(--primary);
 }
 
 .neom-scrollbar::-webkit-scrollbar {
@@ -81,32 +61,14 @@ body {
 }
 
 .neom-scrollbar::-webkit-scrollbar-track {
-  background: rgba(15, 23, 42, 0.5);
+  background: #f1f5f9;
 }
 
 .neom-scrollbar::-webkit-scrollbar-thumb {
-  background: rgba(6, 182, 212, 0.3);
+  background: #cbd5e1;
   border-radius: 3px;
 }
 
 .neom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: rgba(6, 182, 212, 0.5);
-}
-
-@keyframes float {
-  0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-12px); }
-}
-
-@keyframes pulse-glow {
-  0%, 100% { opacity: 0.4; }
-  50% { opacity: 1; }
-}
-
-.animate-float {
-  animation: float 6s ease-in-out infinite;
-}
-
-.animate-pulse-glow {
-  animation: pulse-glow 3s ease-in-out infinite;
+  background: #94a3b8;
 }

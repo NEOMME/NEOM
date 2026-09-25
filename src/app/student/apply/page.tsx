@@ -119,12 +119,12 @@ export default function ApplyPage() {
   if (submitted) {
     return (
       <div className="p-8 max-w-2xl mx-auto flex items-center justify-center min-h-[80vh]">
-        <Card glow className="text-center w-full">
-          <div className="w-16 h-16 rounded-full bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center mx-auto mb-6">
-            <Check className="w-8 h-8 text-emerald-400" />
+        <Card className="text-center w-full">
+          <div className="w-16 h-16 rounded-full bg-emerald-50 border border-emerald-200 flex items-center justify-center mx-auto mb-6">
+            <Check className="w-8 h-8 text-emerald-600" />
           </div>
-          <h1 className="text-2xl font-bold text-white mb-2">Application Submitted!</h1>
-          <p className="text-slate-400 mb-6">
+          <h1 className="text-2xl font-bold text-slate-900 mb-2">Application Submitted!</h1>
+          <p className="text-slate-600 mb-6">
             Your application has been sent successfully. You can track its progress on your dashboard.
           </p>
           <Link href="/student">
@@ -138,12 +138,12 @@ export default function ApplyPage() {
   return (
     <div className="p-8 max-w-3xl mx-auto">
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
-        <Link href="/student" className="inline-flex items-center gap-1 text-sm text-slate-400 hover:text-cyan-400 mb-4 transition-colors">
+        <Link href="/student" className="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-blue-700 mb-4 transition-colors">
           <ArrowLeft className="w-4 h-4" />
           Back to Dashboard
         </Link>
-        <h1 className="text-3xl font-bold text-white mb-1">University Application</h1>
-        <p className="text-slate-400">Complete all 6 steps to submit your application.</p>
+        <h1 className="text-3xl font-bold text-slate-900 mb-1">University Application</h1>
+        <p className="text-slate-600">Complete all 6 steps to submit your application.</p>
       </motion.div>
 
       {/* Step indicator */}
@@ -155,16 +155,16 @@ export default function ApplyPage() {
               className={cn(
                 "w-10 h-10 rounded-xl flex items-center justify-center text-sm font-bold transition-all",
                 i < step
-                  ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 cursor-pointer"
+                  ? "bg-emerald-50 text-emerald-700 border border-emerald-200 cursor-pointer"
                   : i === step
-                    ? "bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 glow-cyan"
-                    : "bg-slate-800 text-slate-500 border border-slate-700"
+                    ? "bg-blue-50 text-blue-700 border border-blue-300"
+                    : "bg-white text-slate-400 border border-slate-200"
               )}
             >
               {i < step ? <Check className="w-4 h-4" /> : i + 1}
             </button>
             {i < APPLICATION_STEPS.length - 1 && (
-              <div className={cn("w-8 h-px", i < step ? "bg-emerald-500/50" : "bg-slate-700")} />
+              <div className={cn("w-8 h-px", i < step ? "bg-emerald-300" : "bg-slate-200")} />
             )}
           </div>
         ))}
@@ -179,10 +179,10 @@ export default function ApplyPage() {
             exit={{ opacity: 0, x: -20 }}
             transition={{ duration: 0.2 }}
           >
-            <h2 className="text-xl font-semibold text-white mb-1">
+            <h2 className="text-xl font-semibold text-slate-900 mb-1">
               {APPLICATION_STEPS[step].title}
             </h2>
-            <p className="text-sm text-slate-400 mb-6">{APPLICATION_STEPS[step].description}</p>
+            <p className="text-sm text-slate-600 mb-6">{APPLICATION_STEPS[step].description}</p>
 
             {STEP_IDS[step] === "profile" && (
               <div className="grid sm:grid-cols-2 gap-4">
@@ -208,8 +208,8 @@ export default function ApplyPage() {
                         className={cn(
                           "p-3 rounded-xl text-left text-sm transition-all border",
                           form.countryId === c.id
-                            ? "border-cyan-500/50 bg-cyan-500/10 text-cyan-400"
-                            : "border-white/10 glass text-slate-300 hover:border-white/20"
+                            ? "border-blue-300 bg-blue-50 text-blue-700"
+                            : "border-slate-200 bg-white text-slate-700 hover:border-slate-300"
                         )}
                       >
                         {c.flag} {c.name}
@@ -228,12 +228,12 @@ export default function ApplyPage() {
                           className={cn(
                             "w-full p-4 rounded-xl text-left transition-all border",
                             form.universityId === u.id
-                              ? "border-cyan-500/50 bg-cyan-500/10"
-                              : "border-white/10 glass hover:border-white/20"
+                              ? "border-blue-300 bg-blue-50"
+                              : "border-slate-200 bg-white hover:border-slate-300"
                           )}
                         >
-                          <p className="font-medium text-white">{u.name}</p>
-                          <p className="text-xs text-slate-400 mt-1">{u.tuition} · Deadline: {u.deadline}</p>
+                          <p className="font-medium text-slate-900">{u.name}</p>
+                          <p className="text-xs text-slate-500 mt-1">{u.tuition} · Deadline: {u.deadline}</p>
                         </button>
                       ))}
                     </div>
@@ -262,8 +262,8 @@ export default function ApplyPage() {
                       className={cn(
                         "w-full p-3 rounded-xl text-left text-sm transition-all border",
                         form.program === p
-                          ? "border-cyan-500/50 bg-cyan-500/10 text-cyan-400"
-                          : "border-white/10 glass text-slate-300 hover:border-white/20"
+                          ? "border-blue-300 bg-blue-50 text-blue-700"
+                          : "border-slate-200 bg-white text-slate-700 hover:border-slate-300"
                       )}
                     >
                       {p}
@@ -288,13 +288,13 @@ export default function ApplyPage() {
                       className={cn(
                         "w-full flex items-center justify-between p-4 rounded-xl border transition-all",
                         uploaded
-                          ? "border-emerald-500/30 bg-emerald-500/10"
-                          : "border-white/10 glass hover:border-cyan-500/30"
+                          ? "border-emerald-200 bg-emerald-50"
+                          : "border-slate-200 bg-white hover:border-blue-200"
                       )}
                     >
-                      <span className="text-sm text-white">{doc}</span>
+                      <span className="text-sm text-slate-900">{doc}</span>
                       {uploaded ? (
-                        <Check className="w-4 h-4 text-emerald-400" />
+                        <Check className="w-4 h-4 text-emerald-600" />
                       ) : (
                         <Upload className="w-4 h-4 text-slate-400" />
                       )}
@@ -315,9 +315,9 @@ export default function ApplyPage() {
                   ["GPA", form.gpa],
                   ["Documents", form.documents.join(", ")],
                 ].map(([label, value]) => (
-                  <div key={label} className="flex justify-between py-2 border-b border-white/5">
-                    <span className="text-slate-400">{label}</span>
-                    <span className="text-white font-medium">{value}</span>
+                  <div key={label} className="flex justify-between py-2 border-b border-slate-200">
+                    <span className="text-slate-500">{label}</span>
+                    <span className="text-slate-900 font-medium">{value}</span>
                   </div>
                 ))}
               </div>
@@ -326,12 +326,12 @@ export default function ApplyPage() {
         </AnimatePresence>
 
         {submitError && (
-          <p className="text-sm text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2 mt-6">
+          <p className="text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg px-3 py-2 mt-6">
             {submitError}
           </p>
         )}
 
-        <div className="flex justify-between mt-8 pt-6 border-t border-white/5">
+        <div className="flex justify-between mt-8 pt-6 border-t border-slate-200">
           <Button
             variant="ghost"
             onClick={() => setStep((s) => Math.max(0, s - 1))}
@@ -371,12 +371,12 @@ function Field({
 }) {
   return (
     <div>
-      <label className="block text-sm text-slate-400 mb-1.5">{label}</label>
+      <label className="block text-sm font-medium text-slate-700 mb-1.5">{label}</label>
       <input
         type={type}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full px-4 py-2.5 bg-slate-900/50 border border-white/10 rounded-xl text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-cyan-500/50 transition-colors"
+        className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-lg text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
       />
     </div>
   );

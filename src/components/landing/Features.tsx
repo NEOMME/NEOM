@@ -1,84 +1,61 @@
 "use client";
 
 import { Card } from "@/components/ui/Card";
-import { motion } from "framer-motion";
-import { Bot, Globe, Layers, Shield, Sparkles, Zap } from "lucide-react";
+import { BookOpen, ClipboardList, Globe, Headphones, Shield, Timer } from "lucide-react";
 
 const features = [
   {
-    icon: Bot,
-    title: "AI-Powered Guidance",
-    description: "Our AI assistant understands your goals and guides you through every step with personalized recommendations.",
-    color: "from-cyan-500 to-blue-600",
+    icon: ClipboardList,
+    title: "Guided Applications",
+    description: "A structured six-step process keeps every requirement clear from start to finish.",
   },
   {
     icon: Globe,
     title: "Global Universities",
-    description: "Choose from partner universities across 8+ countries. Filter by category, program, and deadline.",
-    color: "from-violet-500 to-purple-600",
+    description: "Browse partner institutions across multiple countries, programs, and deadlines.",
   },
   {
-    icon: Layers,
-    title: "6-Step Process",
-    description: "Clear, structured application flow. Profile → Destination → Academic → Programs → Documents → Review.",
-    color: "from-emerald-500 to-teal-600",
+    icon: BookOpen,
+    title: "Program Discovery",
+    description: "Filter universities by field, country, and category to find the right fit.",
   },
   {
-    icon: Sparkles,
-    title: "Smart Matching",
-    description: "AI analyzes your academic profile and suggests the best-fit universities and programs for you.",
-    color: "from-amber-500 to-orange-600",
+    icon: Headphones,
+    title: "Application Support",
+    description: "Get answers about requirements, documents, and deadlines whenever you need help.",
   },
   {
     icon: Shield,
     title: "Secure & Private",
-    description: "Your documents and personal data are encrypted and handled with the highest security standards.",
-    color: "from-rose-500 to-pink-600",
+    description: "Your personal information is protected with industry-standard security practices.",
   },
   {
-    icon: Zap,
-    title: "Real-Time Tracking",
-    description: "Track your application status in real time. Get notified at every milestone in the process.",
-    color: "from-indigo-500 to-blue-600",
+    icon: Timer,
+    title: "Status Tracking",
+    description: "Follow your application progress from submission through review.",
   },
 ];
 
 export function Features() {
   return (
-    <section id="features" className="py-24 px-6">
+    <section id="features" className="py-20 px-6 bg-slate-50">
       <div className="max-w-7xl mx-auto">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="text-center mb-16"
-        >
-          <h2 className="text-4xl font-bold mb-4">
-            Why Choose <span className="text-gradient">Neom</span>?
-          </h2>
-          <p className="text-slate-400 max-w-2xl mx-auto">
-            We provide very clear and specific details at every stage.
-            Our process is designed to be smooth, transparent, and stress-free.
+        <div className="text-center mb-14">
+          <h2 className="text-3xl font-bold text-slate-900 mb-4">Why students choose Neom</h2>
+          <p className="text-slate-600 max-w-2xl mx-auto">
+            Everything you need to research universities and submit a complete application — in one place.
           </p>
-        </motion.div>
+        </div>
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {features.map((feature, i) => (
-            <motion.div
-              key={feature.title}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: i * 0.1 }}
-            >
-              <Card className="h-full hover:glow-cyan group">
-                <div className={`inline-flex p-3 rounded-xl bg-gradient-to-br ${feature.color} mb-4 group-hover:scale-110 transition-transform`}>
-                  <feature.icon className="w-6 h-6 text-white" />
-                </div>
-                <h3 className="text-lg font-semibold text-white mb-2">{feature.title}</h3>
-                <p className="text-sm text-slate-400 leading-relaxed">{feature.description}</p>
-              </Card>
-            </motion.div>
+          {features.map((feature) => (
+            <Card key={feature.title} className="h-full">
+              <div className="inline-flex p-3 rounded-lg bg-blue-50 text-blue-700 mb-4">
+                <feature.icon className="w-6 h-6" />
+              </div>
+              <h3 className="text-lg font-semibold text-slate-900 mb-2">{feature.title}</h3>
+              <p className="text-sm text-slate-600 leading-relaxed">{feature.description}</p>
+            </Card>
           ))}
         </div>
       </div>

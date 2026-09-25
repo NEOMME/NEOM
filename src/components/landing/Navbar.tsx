@@ -4,28 +4,24 @@ import { Button } from "@/components/ui/Button";
 import Link from "next/link";
 import { GraduationCap, Menu, X } from "lucide-react";
 import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
 
 export function Navbar() {
   const [open, setOpen] = useState(false);
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 glass-strong">
+    <nav className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur border-b border-slate-200">
       <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-        <Link href="/" className="flex items-center gap-2.5 group">
-          <div className="p-2 rounded-xl bg-gradient-to-br from-cyan-500 to-violet-600 group-hover:glow-cyan transition-all">
+        <Link href="/" className="flex items-center gap-2.5">
+          <div className="p-2 rounded-lg bg-blue-700">
             <GraduationCap className="w-5 h-5 text-white" />
           </div>
-          <div>
-            <span className="font-bold text-lg text-white">Neom</span>
-            <span className="text-xs text-cyan-400 ml-1.5 font-mono">NEMP</span>
-          </div>
+          <span className="font-bold text-lg text-slate-900">Neom</span>
         </Link>
 
         <div className="hidden md:flex items-center gap-8">
-          <Link href="#features" className="text-sm text-slate-400 hover:text-cyan-400 transition-colors">Features</Link>
-          <Link href="#process" className="text-sm text-slate-400 hover:text-cyan-400 transition-colors">Process</Link>
-          <Link href="#universities" className="text-sm text-slate-400 hover:text-cyan-400 transition-colors">Universities</Link>
+          <Link href="#features" className="text-sm text-slate-600 hover:text-blue-700 transition-colors">Features</Link>
+          <Link href="#process" className="text-sm text-slate-600 hover:text-blue-700 transition-colors">Process</Link>
+          <Link href="#universities" className="text-sm text-slate-600 hover:text-blue-700 transition-colors">Universities</Link>
         </div>
 
         <div className="hidden md:flex items-center gap-3">
@@ -37,29 +33,22 @@ export function Navbar() {
           </Link>
         </div>
 
-        <button className="md:hidden p-2 text-slate-400" onClick={() => setOpen(!open)}>
+        <button className="md:hidden p-2 text-slate-600" onClick={() => setOpen(!open)}>
           {open ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
         </button>
       </div>
 
-      <AnimatePresence>
-        {open && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            className="md:hidden glass border-t border-white/5 px-6 py-4 space-y-3"
-          >
-            <Link href="#features" className="block text-sm text-slate-400 py-2" onClick={() => setOpen(false)}>Features</Link>
-            <Link href="#process" className="block text-sm text-slate-400 py-2" onClick={() => setOpen(false)}>Process</Link>
-            <Link href="#universities" className="block text-sm text-slate-400 py-2" onClick={() => setOpen(false)}>Universities</Link>
-            <Link href="/login" className="block text-sm text-slate-400 py-2" onClick={() => setOpen(false)}>Sign In</Link>
-            <Link href="/signup" onClick={() => setOpen(false)}>
-              <Button className="w-full" size="sm">Get Started</Button>
-            </Link>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {open && (
+        <div className="md:hidden border-t border-slate-200 bg-white px-6 py-4 space-y-3">
+          <Link href="#features" className="block text-sm text-slate-600 py-2" onClick={() => setOpen(false)}>Features</Link>
+          <Link href="#process" className="block text-sm text-slate-600 py-2" onClick={() => setOpen(false)}>Process</Link>
+          <Link href="#universities" className="block text-sm text-slate-600 py-2" onClick={() => setOpen(false)}>Universities</Link>
+          <Link href="/login" className="block text-sm text-slate-600 py-2" onClick={() => setOpen(false)}>Sign In</Link>
+          <Link href="/signup" onClick={() => setOpen(false)}>
+            <Button className="w-full" size="sm">Get Started</Button>
+          </Link>
+        </div>
+      )}
     </nav>
   );
 }

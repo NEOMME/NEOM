@@ -75,11 +75,11 @@ export default function StudentDashboard() {
         animate={{ opacity: 1, y: 0 }}
         className="mb-8"
       >
-        <h1 className="text-3xl font-bold text-white mb-1">
+        <h1 className="text-3xl font-bold text-slate-900 mb-1">
           Welcome back, {currentStudent?.name?.split(" ")[0] ?? "Student"}
         </h1>
-        <p className="text-slate-400">
-          Your AI-powered application hub. Track progress and get guidance anytime.
+        <p className="text-slate-600">
+          Track your applications and get help with the process anytime.
         </p>
       </motion.div>
 
@@ -89,13 +89,13 @@ export default function StudentDashboard() {
             icon: FileText,
             label: "Applications",
             value: myApps.length,
-            color: "text-cyan-400",
+            color: "text-blue-700",
           },
           {
             icon: GraduationCap,
             label: "Universities",
             value: universities.filter((u) => u.published).length,
-            color: "text-violet-400",
+            color: "text-teal-700",
           },
           {
             icon: Clock,
@@ -104,17 +104,17 @@ export default function StudentDashboard() {
               (acc, a) => acc + a.steps.filter((s) => !s.completed).length,
               0
             ),
-            color: "text-amber-400",
+            color: "text-amber-600",
           },
         ].map((stat) => (
           <Card key={stat.label}>
             <div className="flex items-center gap-4">
-              <div className="p-3 rounded-xl glass">
+              <div className="p-3 rounded-lg bg-slate-50 border border-slate-200">
                 <stat.icon className={`w-5 h-5 ${stat.color}`} />
               </div>
               <div>
-                <p className="text-2xl font-bold text-white">{stat.value}</p>
-                <p className="text-sm text-slate-400">{stat.label}</p>
+                <p className="text-2xl font-bold text-slate-900">{stat.value}</p>
+                <p className="text-sm text-slate-500">{stat.label}</p>
               </div>
             </div>
           </Card>
@@ -125,7 +125,7 @@ export default function StudentDashboard() {
         <div className="lg:col-span-3 space-y-6">
           <Card>
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-lg font-semibold text-white">Your Applications</h2>
+              <h2 className="text-lg font-semibold text-slate-900">Your Applications</h2>
               <Link href="/student/apply">
                 <Button size="sm">
                   New Application
@@ -136,8 +136,8 @@ export default function StudentDashboard() {
 
             {myApps.length === 0 ? (
               <div className="text-center py-12">
-                <FileText className="w-12 h-12 text-slate-600 mx-auto mb-3" />
-                <p className="text-slate-400 mb-4">No applications yet</p>
+                <FileText className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+                <p className="text-slate-500 mb-4">No applications yet</p>
                 <Link href="/student/apply">
                   <Button>Start Your First Application</Button>
                 </Link>
@@ -151,12 +151,12 @@ export default function StudentDashboard() {
                   return (
                     <div
                       key={app.id}
-                      className="glass rounded-xl p-5 hover:border-cyan-500/20 transition-colors"
+                      className="rounded-xl border border-slate-200 bg-white p-5 hover:border-blue-200 transition-colors"
                     >
                       <div className="flex items-start justify-between mb-3">
                         <div>
-                          <h3 className="font-medium text-white">{app.universityName}</h3>
-                          <p className="text-sm text-slate-400">{app.countryName}</p>
+                          <h3 className="font-medium text-slate-900">{app.universityName}</h3>
+                          <p className="text-sm text-slate-500">{app.countryName}</p>
                         </div>
                         <Badge label={app.status.replace("_", " ")} status={app.status} />
                       </div>
@@ -166,9 +166,9 @@ export default function StudentDashboard() {
                           <span>Progress</span>
                           <span>{completedSteps}/{app.steps.length} steps</span>
                         </div>
-                        <div className="h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                        <div className="h-1.5 bg-slate-200 rounded-full overflow-hidden">
                           <div
-                            className="h-full bg-gradient-to-r from-cyan-500 to-violet-500 rounded-full transition-all"
+                            className="h-full bg-blue-700 rounded-full transition-all"
                             style={{ width: `${progress}%` }}
                           />
                         </div>
@@ -185,18 +185,18 @@ export default function StudentDashboard() {
           </Card>
 
           <Card>
-            <h2 className="text-lg font-semibold text-white mb-4">Application Steps</h2>
+            <h2 className="text-lg font-semibold text-slate-900 mb-4">Application Steps</h2>
             <div className="grid sm:grid-cols-2 gap-3">
               {APPLICATION_STEPS.map((step, i) => (
                 <div
                   key={step.id}
-                  className="flex items-center gap-3 p-3 rounded-xl glass"
+                  className="flex items-center gap-3 p-3 rounded-lg bg-slate-50 border border-slate-200"
                 >
-                  <div className="w-8 h-8 rounded-lg bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-xs font-bold text-cyan-400">
+                  <div className="w-8 h-8 rounded-lg bg-blue-50 border border-blue-200 flex items-center justify-center text-xs font-bold text-blue-700">
                     {i + 1}
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-white">{step.title}</p>
+                    <p className="text-sm font-medium text-slate-900">{step.title}</p>
                     <p className="text-xs text-slate-500">{step.description}</p>
                   </div>
                 </div>
@@ -205,14 +205,13 @@ export default function StudentDashboard() {
           </Card>
         </div>
 
-        <div id="ai" className="lg:col-span-2">
+        <div id="support" className="lg:col-span-2">
           <div className="sticky top-8 h-[calc(100vh-4rem)]">
             <ChatPanel
-              title="Neom AI Assistant"
-              subtitle="Powered by Groq / DeepSeek"
+              title="Application Support"
+              subtitle="Ask about universities, requirements, and deadlines"
               messages={studentChat}
               onSend={handleSend}
-              accent="cyan"
               suggestions={[
                 "What universities do you offer?",
                 "Explain the application process",

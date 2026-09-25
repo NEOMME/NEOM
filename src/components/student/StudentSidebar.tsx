@@ -3,9 +3,9 @@
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 import {
-  Bot,
   FileText,
   GraduationCap,
+  Headphones,
   Home,
   LayoutDashboard,
   LogOut,
@@ -16,7 +16,7 @@ import { usePathname, useRouter } from "next/navigation";
 const links = [
   { href: "/student", label: "Dashboard", icon: LayoutDashboard, exact: true },
   { href: "/student/apply", label: "Apply", icon: FileText },
-  { href: "/student#ai", label: "AI Assistant", icon: Bot, hash: true },
+  { href: "/student#support", label: "Support", icon: Headphones, hash: true },
   { href: "/student/universities", label: "Universities", icon: GraduationCap },
 ];
 
@@ -37,16 +37,13 @@ export function StudentSidebar() {
   };
 
   return (
-    <aside className="w-64 glass-strong border-r border-white/5 flex flex-col shrink-0">
-      <div className="p-6 border-b border-white/5">
+    <aside className="w-64 bg-white border-r border-slate-200 flex flex-col shrink-0">
+      <div className="p-6 border-b border-slate-200">
         <Link href="/" className="flex items-center gap-2">
-          <div className="p-2 rounded-xl bg-gradient-to-br from-cyan-500 to-violet-600">
+          <div className="p-2 rounded-lg bg-blue-700">
             <GraduationCap className="w-4 h-4 text-white" />
           </div>
-          <div>
-            <span className="font-bold text-white">Neom</span>
-            <span className="text-[10px] text-cyan-400 ml-1 font-mono">STUDENT</span>
-          </div>
+          <span className="font-bold text-slate-900">Neom</span>
         </Link>
       </div>
 
@@ -56,10 +53,10 @@ export function StudentSidebar() {
             key={link.label}
             href={link.href}
             className={cn(
-              "flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm transition-all",
+              "flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm transition-colors",
               isActive(link)
-                ? "bg-cyan-500/15 text-cyan-400 border border-cyan-500/20"
-                : "text-slate-400 hover:text-white hover:bg-white/5"
+                ? "bg-blue-50 text-blue-700 font-medium"
+                : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
             )}
           >
             <link.icon className="w-4 h-4" />
@@ -68,17 +65,17 @@ export function StudentSidebar() {
         ))}
       </nav>
 
-      <div className="p-4 border-t border-white/5 space-y-1">
+      <div className="p-4 border-t border-slate-200 space-y-1">
         <Link
           href="/"
-          className="flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm text-slate-400 hover:text-white hover:bg-white/5 transition-all"
+          className="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-colors"
         >
           <Home className="w-4 h-4" />
           Back to Home
         </Link>
         <button
           onClick={handleSignOut}
-          className="flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm text-slate-400 hover:text-red-400 hover:bg-red-500/5 transition-all w-full"
+          className="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm text-slate-600 hover:text-red-700 hover:bg-red-50 transition-colors w-full"
         >
           <LogOut className="w-4 h-4" />
           Sign Out
