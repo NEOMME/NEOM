@@ -371,6 +371,150 @@ export async function toggleUniversityPublished(id: string, published: boolean) 
   if (error) throw error;
 }
 
+function slugFromName(name: string): string {
+  const base = name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "")
+    .slice(0, 36);
+  return `${base || "uni"}-${Date.now().toString(36)}`;
+}
+
+export async function createUniversity(data: {
+  name: string;
+  countryId: string;
+  description?: string;
+  tuition?: string;
+  ranking?: number;
+  programs?: string[];
+  deadline?: string;
+  published?: boolean;
+  categoryIds?: string[];
+  id?: string;
+}) {
+  const supabase = createAdminClient();
+  const id = data.id ?? slugFromName(data.name);
+
+  const { error } = await supabase.from("universities").insert({
+    id,
+    name: data.name,
+    country_id: data.countryId,
+    description: data.description ?? "",
+    tuition: data.tuition ?? "",
+    ranking: data.ranking ?? 0,
+    programs: data.programs ?? [],
+    deadline: data.deadline ?? "",
+    published: data.published ?? false,
+  });
+
+  if (error) throw error;
+
+  for (const catId of data.categoryIds ?? []) {
+    await supabase.from("university_categories").insert({
+      university_id: id,
+      category_id: catId,
+    });
+  }
+
+  return id;
+}
+
+export async function updateUniversity(
+  id: string,
+  data: Partial<{
+    name: string;
+    countryId: string;
+    description: string;
+    tuition: string;
+    ranking: number;
+    programs: string[];
+    deadline: string;
+    published: boolean;
+  }>
+) {
+  const supabase = createAdminClient();
+  const payload: Record<string, unknown> = {};
+  if (data.name !== undefined) payload.name = data.name;
+  if (data.countryId !== undefined) payload.country_id = data.countryId;
+  if (data.description !== undefined) payload.description = data.description;
+  if (data.tuition !== undefined) payload.tuition = data.tuition;
+  if (data.ranking !== undefined) payload.ranking = data.ranking;
+  if (data.programs !== undefined) payload.programs = data.programs;
+  if (data.deadline !== undefined) payload.deadline = data.deadline;
+  if (data.published !== undefined) payload.published = data.published;
+
+  const { error } = await supabase.from("universities").update(payload).eq("id", id);
+  if (error) throw error;
+}
+
+export async function deleteUniversity(id: string) {
+  const supabase = createAdminClient();
+  const { count } = await supabase
+    .from("applications")
+    .select("*", { count: "exact", head: true })
+    .eq("university_id", id);
+
+  if (count && count > 0) {
+    throw new Error(
+      `Cannot delete university ${id}: ${count} application(s) reference it. Unpublish instead.`
+    );
+  }
+
+  await supabase.from("university_categories").delete().eq("university_id", id);
+  const { error } = await supabase.from("universities").delete().eq("id", id);
+  if (error) throw error;
+}
+
+export async function deleteApplication(id: string) {
+  const supabase = createAdminClient();
+  const { error } = await supabase.from("applications").delete().eq("id", id);
+  if (error) throw error;
+}
+
+export async function deleteStagingEntry(id: string) {
+  const supabase = createAdminClient();
+  const { error } = await supabase.from("universities_staging").delete().eq("id", id);
+  if (error) throw error;
+}
+
+export async function deleteEmailCampaign(id: string) {
+  const supabase = createAdminClient();
+  const { error } = await supabase.from("email_campaigns").delete().eq("id", id);
+  if (error) throw error;
+}
+
+export async function createPromotion(data: {
+  title: string;
+  description?: string;
+  discount?: string;
+  active?: boolean;
+  startDate: string;
+  endDate: string;
+}) {
+  const supabase = createAdminClient();
+  const { data: row, error } = await supabase
+    .from("promotions")
+    .insert({
+      title: data.title,
+      description: data.description ?? "",
+      discount: data.discount ?? "",
+      active: data.active ?? true,
+      start_date: data.startDate,
+      end_date: data.endDate,
+    })
+    .select("*")
+    .single();
+
+  if (error) throw error;
+  return mapPromotion(row);
+}
+
+export async function deletePromotion(id: string) {
+  const supabase = createAdminClient();
+  const { error } = await supabase.from("promotions").delete().eq("id", id);
+  if (error) throw error;
+}
+
 export async function togglePromotion(id: string, active: boolean) {
   const supabase = createAdminClient();
   const { error } = await supabase.from("promotions").update({ active }).eq("id", id);

@@ -98,6 +98,8 @@ export default function AdminAIPage() {
             "Research top engineering universities in Germany",
             "Mark the latest submitted application as under review",
             "List pending staging and approve the first one",
+            "Add a new university in Canada with CS programs",
+            "Delete rejected staging entries",
           ]}
         />
       </div>

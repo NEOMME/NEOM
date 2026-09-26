@@ -3,14 +3,27 @@ import {
   rejectStagingUniversity,
   runUniversityResearch,
 } from "@/lib/ai/research";
+import { APPLICATION_STEPS } from "@/lib/data";
 import {
+  createApplication,
+  createCategory,
   createEmailCampaign,
   createNotification,
+  createPromotion,
+  createUniversity,
+  deleteApplication,
+  deleteCategory,
+  deleteEmailCampaign,
+  deletePromotion,
+  deleteStagingEntry,
+  deleteUniversity,
   fetchAdminData,
   fetchPlatformData,
+  getApplicationById,
   searchUniversities,
   toggleUniversityPublished,
   updateApplicationFull,
+  updateUniversity,
 } from "@/lib/db/queries";
 import type { User } from "@/lib/types";
 import {
@@ -80,6 +93,35 @@ export const STUDENT_TOOLS: ToolDefinition[] = [
           universityId: { type: "string", description: "University ID" },
         },
         required: ["universityId"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "start_draft_application",
+      description: "Create a new draft application for the current student at a university",
+      parameters: {
+        type: "object",
+        properties: {
+          universityId: { type: "string" },
+          programNotes: { type: "string", description: "Optional program interest notes" },
+        },
+        required: ["universityId"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "delete_my_draft_application",
+      description: "Delete one of the student's draft applications (draft status only)",
+      parameters: {
+        type: "object",
+        properties: {
+          applicationId: { type: "string" },
+        },
+        required: ["applicationId"],
       },
     },
   },
@@ -244,6 +286,159 @@ export const ADMIN_TOOLS: ToolDefinition[] = [
       },
     },
   },
+  {
+    type: "function",
+    function: {
+      name: "add_university",
+      description: "Add a new partner university to the catalog",
+      parameters: {
+        type: "object",
+        properties: {
+          name: { type: "string" },
+          countryId: { type: "string" },
+          description: { type: "string" },
+          tuition: { type: "string" },
+          ranking: { type: "number" },
+          programs: { type: "array", items: { type: "string" } },
+          deadline: { type: "string" },
+          published: { type: "boolean" },
+          categoryIds: { type: "array", items: { type: "string" } },
+        },
+        required: ["name", "countryId"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "update_university",
+      description: "Update an existing university's fields",
+      parameters: {
+        type: "object",
+        properties: {
+          universityId: { type: "string" },
+          name: { type: "string" },
+          countryId: { type: "string" },
+          description: { type: "string" },
+          tuition: { type: "string" },
+          ranking: { type: "number" },
+          programs: { type: "array", items: { type: "string" } },
+          deadline: { type: "string" },
+          published: { type: "boolean" },
+        },
+        required: ["universityId"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "delete_university",
+      description: "Permanently delete a university (fails if applications exist)",
+      parameters: {
+        type: "object",
+        properties: { universityId: { type: "string" } },
+        required: ["universityId"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "delete_application",
+      description: "Permanently delete a student application record",
+      parameters: {
+        type: "object",
+        properties: { applicationId: { type: "string" } },
+        required: ["applicationId"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "delete_staging_entry",
+      description: "Permanently remove a row from universities_staging",
+      parameters: {
+        type: "object",
+        properties: { stagingId: { type: "string" } },
+        required: ["stagingId"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "add_category",
+      description: "Add an academic category",
+      parameters: {
+        type: "object",
+        properties: {
+          id: { type: "string", description: "Slug id e.g. eng-tech" },
+          name: { type: "string" },
+          description: { type: "string" },
+          icon: { type: "string" },
+          color: { type: "string" },
+        },
+        required: ["id", "name"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "delete_category",
+      description: "Delete a category by id",
+      parameters: {
+        type: "object",
+        properties: { categoryId: { type: "string" } },
+        required: ["categoryId"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "add_promotion",
+      description: "Create a marketing promotion",
+      parameters: {
+        type: "object",
+        properties: {
+          title: { type: "string" },
+          description: { type: "string" },
+          discount: { type: "string" },
+          startDate: { type: "string", description: "YYYY-MM-DD" },
+          endDate: { type: "string", description: "YYYY-MM-DD" },
+          active: { type: "boolean" },
+        },
+        required: ["title", "startDate", "endDate"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "delete_promotion",
+      description: "Delete a promotion by id",
+      parameters: {
+        type: "object",
+        properties: { promotionId: { type: "string" } },
+        required: ["promotionId"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "delete_email_campaign",
+      description: "Delete an email campaign by id",
+      parameters: {
+        type: "object",
+        properties: { campaignId: { type: "string" } },
+        required: ["campaignId"],
+      },
+    },
+  },
 ];
 
 export async function executeStudentTool(
@@ -315,6 +510,48 @@ Tuition: ${uni.tuition}
 Ranking: #${uni.ranking}
 Deadline: ${uni.deadline}
 Categories: ${cats.join(", ")}`;
+    }
+
+    case "start_draft_application": {
+      const universityId = args.universityId as string;
+      const uni = data.universities.find((u) => u.id === universityId);
+      if (!uni) return `University "${universityId}" not found.`;
+      const app = await createApplication({
+        studentId: profile.id,
+        universityId,
+        status: "draft",
+        steps: APPLICATION_STEPS.map((s) => ({
+          id: s.id,
+          title: s.title,
+          description: s.description,
+          completed: false,
+        })),
+        personalInfo: {
+          fullName: profile.name,
+          dateOfBirth: "",
+          nationality: profile.country ?? "",
+          phone: "",
+        },
+        academicInfo: {
+          degree: "",
+          gpa: "",
+          institution: "",
+          graduationYear: "",
+        },
+        documents: [],
+        notes: (args.programNotes as string) ?? "",
+      });
+      return `Created draft application id=${app.id} for ${uni.name}. Continue at /student/apply?draft=${app.id}`;
+    }
+
+    case "delete_my_draft_application": {
+      const app = await getApplicationById(args.applicationId as string, profile.id);
+      if (!app) return "Application not found or not yours.";
+      if (app.status !== "draft") {
+        return "Only draft applications can be deleted. Submitted applications cannot be removed by students.";
+      }
+      await deleteApplication(app.id);
+      return `Deleted draft application ${app.id}.`;
     }
 
     default:
@@ -466,6 +703,103 @@ Use save_email_campaign to persist this draft.`;
             `• ${u.name} (id: ${u.id}) — ${u.published ? "published" : "hidden"} | ${u.tuition}`
         )
         .join("\n");
+    }
+
+    case "add_university": {
+      const id = await createUniversity({
+        name: args.name as string,
+        countryId: args.countryId as string,
+        description: args.description as string | undefined,
+        tuition: args.tuition as string | undefined,
+        ranking: args.ranking as number | undefined,
+        programs: args.programs as string[] | undefined,
+        deadline: args.deadline as string | undefined,
+        published: args.published as boolean | undefined,
+        categoryIds: args.categoryIds as string[] | undefined,
+      });
+      await createNotification({
+        type: "catalog_update",
+        title: "University added",
+        body: `${args.name} added to catalog (id: ${id})`,
+        metadata: { universityId: id },
+      });
+      return `Added university "${args.name}" with id=${id}.`;
+    }
+
+    case "update_university": {
+      const universityId = args.universityId as string;
+      await updateUniversity(universityId, {
+        name: args.name as string | undefined,
+        countryId: args.countryId as string | undefined,
+        description: args.description as string | undefined,
+        tuition: args.tuition as string | undefined,
+        ranking: args.ranking as number | undefined,
+        programs: args.programs as string[] | undefined,
+        deadline: args.deadline as string | undefined,
+        published: args.published as boolean | undefined,
+      });
+      return `Updated university ${universityId}.`;
+    }
+
+    case "delete_university": {
+      try {
+        await deleteUniversity(args.universityId as string);
+        return `Deleted university ${args.universityId}.`;
+      } catch (e) {
+        return e instanceof Error ? e.message : "Delete failed.";
+      }
+    }
+
+    case "delete_application": {
+      await deleteApplication(args.applicationId as string);
+      return `Deleted application ${args.applicationId}.`;
+    }
+
+    case "delete_staging_entry": {
+      await deleteStagingEntry(args.stagingId as string);
+      return `Deleted staging entry ${args.stagingId}.`;
+    }
+
+    case "add_category": {
+      await createCategory({
+        id: args.id as string,
+        name: args.name as string,
+        description: (args.description as string) ?? "",
+        icon: (args.icon as string) ?? "Tag",
+        color: (args.color as string) ?? "#06b6d4",
+      });
+      return `Added category ${args.id}: ${args.name}`;
+    }
+
+    case "delete_category": {
+      try {
+        await deleteCategory(args.categoryId as string);
+        return `Deleted category ${args.categoryId}.`;
+      } catch (e) {
+        return e instanceof Error ? e.message : "Delete failed (may be in use).";
+      }
+    }
+
+    case "add_promotion": {
+      const promo = await createPromotion({
+        title: args.title as string,
+        description: args.description as string | undefined,
+        discount: args.discount as string | undefined,
+        startDate: args.startDate as string,
+        endDate: args.endDate as string,
+        active: args.active as boolean | undefined,
+      });
+      return `Created promotion id=${promo.id}: ${promo.title}`;
+    }
+
+    case "delete_promotion": {
+      await deletePromotion(args.promotionId as string);
+      return `Deleted promotion ${args.promotionId}.`;
+    }
+
+    case "delete_email_campaign": {
+      await deleteEmailCampaign(args.campaignId as string);
+      return `Deleted email campaign ${args.campaignId}.`;
     }
 
     default:

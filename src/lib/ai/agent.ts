@@ -25,7 +25,7 @@ interface AIMessage {
 }
 
 const MAX_TOOL_ROUNDS = 5;
-const MAX_ADMIN_TOOL_ROUNDS = 2;
+const MAX_ADMIN_TOOL_ROUNDS = 4;
 
 export async function runAgent(params: {
   systemPrompt: string;
