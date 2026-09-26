@@ -80,8 +80,8 @@ export function formatAdminDataForMessage(data: AdminData, message: string): str
   }
 
   if (parts.length === 1) {
-    parts.push(formatApplications(data, 8));
-    parts.push(formatStaging(data, 5));
+    parts.push(formatApplications(data, 4));
+    parts.push(formatStaging(data, 3));
   }
 
   const max = getMaxContextChars();
@@ -175,14 +175,15 @@ async function runSearchAndOptionalAdd(
   }
 
   try {
-    let results = await runUniversityResearch({ query }, profile);
-
-    if (results.length === 0) {
-      results = await runUniversityResearch(
-        { query: `${query} university official programs tuition` },
-        profile
-      );
-    }
+    const results = await runUniversityResearch(
+      { query },
+      profile,
+      {
+        maxResults: autoAdd ? 1 : 3,
+        fastDraftWithoutWeb: true,
+        skipNotification: autoAdd,
+      }
+    );
 
     if (results.length === 0) {
       return {
@@ -296,6 +297,17 @@ export async function buildAdminLiveContext(compact: boolean): Promise<string> {
 ${formatStats(data)}
 
 ${snapshot}`;
+}
+
+export function shouldAnswerFromPlatformData(message: string): boolean {
+  if (parseUniversitySearchIntent(message)) return false;
+  const lower = message.toLowerCase();
+  if (/\b(draft|write|compose|explain|why|how do i|help me think|summarize in prose)\b/i.test(lower)) {
+    return false;
+  }
+  return /\b(show|list|what are|how many|stats?|overview|dashboard|application|applicant|student|research|staging|pending|user|universit|catalog|submit|email campaign|promotion)\b/i.test(
+    lower
+  );
 }
 
 export function fallbackAdminResponse(message: string, data: AdminData): string {

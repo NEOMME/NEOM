@@ -1,7 +1,7 @@
 import { isLLMAvailable } from "@/lib/ai/config";
 import { callLLMText } from "@/lib/ai/llm";
 import { mapStagingUniversity } from "@/lib/db/mappers";
-import { createNotification } from "@/lib/db/queries";
+import { createNotification, invalidateAdminDataCache } from "@/lib/db/queries";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { StagingUniversity, User } from "@/lib/types";
 
@@ -22,6 +22,31 @@ interface ExtractedUniversity {
   researchNotes: string;
 }
 
+function hasLiveWebResults(searchResults: string): boolean {
+  return !searchResults.startsWith("[Simulated research for:");
+}
+
+function titleCaseUniversityName(query: string): string {
+  return query
+    .trim()
+    .split(/\s+/)
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+    .join(" ");
+}
+
+function draftUniversityFromQuery(query: string): ExtractedUniversity {
+  const name = titleCaseUniversityName(query);
+  return {
+    name: /\b(university|college|institute|school)\b/i.test(name) ? name : `${name} University`,
+    description: `${name} — added via admin AI quick research. Review details in Admin → Universities.`,
+    tuition: "Contact university",
+    ranking: 0,
+    programs: ["General Studies"],
+    deadline: "Rolling",
+    researchNotes: "Fast draft (no web/LLM extraction). Edit catalog entry for accuracy.",
+  };
+}
+
 async function searchWeb(query: string): Promise<string> {
   const apiKey = process.env.TAVILY_API_KEY;
   if (!apiKey) {
@@ -35,8 +60,9 @@ async function searchWeb(query: string): Promise<string> {
       api_key: apiKey,
       query,
       search_depth: "basic",
-      max_results: 5,
+      max_results: 3,
     }),
+    signal: AbortSignal.timeout(10_000),
   });
 
   if (!res.ok) return `Web search failed for: ${query}`;
@@ -50,20 +76,11 @@ async function searchWeb(query: string): Promise<string> {
 async function extractUniversityData(
   query: string,
   searchResults: string,
-  countryId?: string
+  countryId?: string,
+  maxResults = 3
 ): Promise<ExtractedUniversity[]> {
   if (!isLLMAvailable()) {
-    return [
-      {
-        name: `${query} University (Research Draft)`,
-        description: `Research draft for ${query}. Requires admin review before publishing.`,
-        tuition: "Contact university",
-        ranking: 0,
-        programs: ["General Studies"],
-        deadline: "Rolling",
-        researchNotes: searchResults.slice(0, 500),
-      },
-    ];
+    return [draftUniversityFromQuery(query)];
   }
 
   const content = await callLLMText(
@@ -72,38 +89,57 @@ async function extractUniversityData(
         role: "system",
         content: `Extract university information from search results. Return ONLY valid JSON with a "universities" array of objects:
 { "name", "description", "tuition", "ranking" (number), "programs" (string[]), "deadline", "sourceUrl", "researchNotes" }
-Country hint: ${countryId ?? "any"}. Extract up to 3 universities. If data is uncertain, note it in researchNotes.`,
+Country hint: ${countryId ?? "any"}. Extract up to ${maxResults} universities. If data is uncertain, note it in researchNotes.`,
       },
       {
         role: "user",
-        content: `Query: ${query}\n\nSearch results:\n${searchResults}`,
+        content: `Query: ${query}\n\nSearch results:\n${searchResults.slice(0, 6000)}`,
       },
     ],
-    { temperature: 0.3, maxTokens: 2048, jsonMode: true }
+    { temperature: 0.3, maxTokens: 768, jsonMode: true }
   );
   if (!content) return [];
 
   try {
     const parsed = JSON.parse(content);
     const list = Array.isArray(parsed) ? parsed : parsed.universities ?? parsed.results ?? [];
-    return list.slice(0, 3) as ExtractedUniversity[];
+    return list.slice(0, maxResults) as ExtractedUniversity[];
   } catch {
     return [];
   }
 }
 
+export interface ResearchRunOptions {
+  maxResults?: number;
+  /** When true and no Tavily results, skip LLM and create a quick draft entry */
+  fastDraftWithoutWeb?: boolean;
+  skipNotification?: boolean;
+}
+
 export async function runUniversityResearch(
   request: ResearchRequest,
-  profile: User
+  profile: User,
+  options?: ResearchRunOptions
 ): Promise<StagingUniversity[]> {
+  const maxResults = options?.maxResults ?? 3;
   const searchResults = await searchWeb(
     `${request.query} university programs tuition deadline admission`
   );
-  const extracted = await extractUniversityData(
-    request.query,
-    searchResults,
-    request.countryId
-  );
+
+  let extracted: ExtractedUniversity[];
+  if (options?.fastDraftWithoutWeb && !hasLiveWebResults(searchResults)) {
+    extracted = [draftUniversityFromQuery(request.query)];
+  } else {
+    extracted = await extractUniversityData(
+      request.query,
+      searchResults,
+      request.countryId,
+      maxResults
+    );
+    if (extracted.length === 0 && options?.fastDraftWithoutWeb) {
+      extracted = [draftUniversityFromQuery(request.query)];
+    }
+  }
 
   const supabase = createAdminClient();
   const created: StagingUniversity[] = [];
@@ -134,6 +170,10 @@ export async function runUniversityResearch(
   }
 
   if (created.length > 0) {
+    invalidateAdminDataCache();
+  }
+
+  if (created.length > 0 && !options?.skipNotification) {
     await createNotification({
       type: "research_complete",
       title: `${created.length} universities ready for review`,

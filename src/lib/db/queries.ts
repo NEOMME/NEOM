@@ -105,7 +105,11 @@ export async function fetchPlatformData(studentId?: string) {
   };
 }
 
-export async function fetchAdminData() {
+let adminDataCache: { at: number; data: Awaited<ReturnType<typeof fetchAdminDataUncached>> } | null =
+  null;
+const ADMIN_DATA_CACHE_MS = 20_000;
+
+async function fetchAdminDataUncached() {
   const supabase = createAdminClient();
 
   const [
@@ -148,6 +152,20 @@ export async function fetchAdminData() {
     staging: (stagingRes.data ?? []).map(mapStagingUniversity),
     notifications: (notificationsRes.data ?? []).map(mapNotification),
   };
+}
+
+export function invalidateAdminDataCache() {
+  adminDataCache = null;
+}
+
+export async function fetchAdminData() {
+  const now = Date.now();
+  if (adminDataCache && now - adminDataCache.at < ADMIN_DATA_CACHE_MS) {
+    return adminDataCache.data;
+  }
+  const data = await fetchAdminDataUncached();
+  adminDataCache = { at: now, data };
+  return data;
 }
 
 function mapNotification(row: {

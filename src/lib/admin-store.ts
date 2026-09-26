@@ -24,14 +24,23 @@ interface AdminData {
   notifications: Notification[];
 }
 
+export type AdminAIStatusState = {
+  configured: boolean;
+  label: string;
+  provider: string | null;
+};
+
 interface AdminStore extends AdminData {
   currentAdmin: User | null;
   adminChat: { id: string; role: "user" | "assistant"; content: string; timestamp: string }[];
+  adminAiStatus: AdminAIStatusState | null;
   loading: boolean;
   hydrated: boolean;
 
   hydrate: () => Promise<void>;
   addAdminMessage: (msg: { id: string; role: "user" | "assistant"; content: string; timestamp: string }) => void;
+  setAdminAiStatus: (status: AdminAIStatusState | null) => void;
+  clearAdminChat: () => Promise<void>;
   refresh: () => Promise<void>;
 }
 
@@ -51,6 +60,7 @@ export const useAdminStore = create<AdminStore>()((set, get) => ({
   ...empty,
   currentAdmin: null,
   adminChat: [],
+  adminAiStatus: null,
   loading: false,
   hydrated: false,
 
@@ -67,12 +77,21 @@ export const useAdminStore = create<AdminStore>()((set, get) => ({
       if (!platformRes.ok) throw new Error("Failed to load admin data");
 
       const data = await platformRes.json();
-      const chatData = chatRes.ok ? await chatRes.json() : { history: [] };
+      const chatData = chatRes.ok
+        ? await chatRes.json()
+        : { history: [], aiStatus: null };
 
       set({
         ...data,
         currentAdmin: data.currentUser,
         adminChat: chatData.history ?? [],
+        adminAiStatus: chatData.aiStatus
+          ? {
+              configured: chatData.aiStatus.configured,
+              label: chatData.aiStatus.label,
+              provider: chatData.aiStatus.provider ?? null,
+            }
+          : null,
         loading: false,
         hydrated: true,
       });
@@ -83,6 +102,13 @@ export const useAdminStore = create<AdminStore>()((set, get) => ({
 
   addAdminMessage: (msg) =>
     set((s) => ({ adminChat: [...s.adminChat, msg] })),
+
+  setAdminAiStatus: (status) => set({ adminAiStatus: status }),
+
+  clearAdminChat: async () => {
+    await fetch("/api/ai/admin", { method: "DELETE" });
+    set({ adminChat: [] });
+  },
 
   refresh: async () => {
     set({ hydrated: false });

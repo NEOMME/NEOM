@@ -25,6 +25,7 @@ interface AIMessage {
 }
 
 const MAX_TOOL_ROUNDS = 5;
+const MAX_ADMIN_TOOL_ROUNDS = 2;
 
 export async function runAgent(params: {
   systemPrompt: string;
@@ -47,7 +48,9 @@ export async function runAgent(params: {
     { role: "user", content: userMessage },
   ];
 
-  for (let round = 0; round < MAX_TOOL_ROUNDS; round++) {
+  const maxRounds = agentType === "admin" ? MAX_ADMIN_TOOL_ROUNDS : MAX_TOOL_ROUNDS;
+
+  for (let round = 0; round < maxRounds; round++) {
     let response = await callLLM(messages, tools, gen);
     if (!response && tools.length > 0) {
       response = await callLLM(messages, [], gen);
@@ -92,6 +95,23 @@ export async function runAgent(params: {
   }
   const text = final?.content?.trim();
   return text || fallback(userMessage);
+}
+
+export async function runSingleShotLLM(params: {
+  systemPrompt: string;
+  userMessage: string;
+  history: { role: "user" | "assistant"; content: string }[];
+}): Promise<string | null> {
+  const gen = getLLMGenerationOptions();
+  const history = params.history.slice(-6);
+  const messages: AIMessage[] = [
+    { role: "system", content: params.systemPrompt },
+    ...history.map((m) => ({ role: m.role, content: m.content })),
+    { role: "user", content: params.userMessage },
+  ];
+
+  const response = await callLLM(messages, [], gen);
+  return response?.content?.trim() || null;
 }
 
 export { getActiveProvider };

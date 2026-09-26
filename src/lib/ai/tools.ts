@@ -1,9 +1,15 @@
-import { runUniversityResearch } from "@/lib/ai/research";
 import {
+  approveStagingUniversity,
+  rejectStagingUniversity,
+  runUniversityResearch,
+} from "@/lib/ai/research";
+import {
+  createEmailCampaign,
   createNotification,
   fetchAdminData,
   fetchPlatformData,
   searchUniversities,
+  toggleUniversityPublished,
   updateApplicationFull,
 } from "@/lib/db/queries";
 import type { User } from "@/lib/types";
@@ -156,7 +162,7 @@ export const ADMIN_TOOLS: ToolDefinition[] = [
     type: "function",
     function: {
       name: "draft_email",
-      description: "Draft an email campaign for students",
+      description: "Draft an email campaign for students (preview only, not saved)",
       parameters: {
         type: "object",
         properties: {
@@ -164,6 +170,77 @@ export const ADMIN_TOOLS: ToolDefinition[] = [
           purpose: { type: "string", description: "What the email should communicate" },
         },
         required: ["purpose"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "approve_staging_university",
+      description: "Approve a researched university from staging and add it to the catalog (unpublished until you publish)",
+      parameters: {
+        type: "object",
+        properties: {
+          stagingId: { type: "string", description: "UUID from list_staging_universities" },
+        },
+        required: ["stagingId"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "reject_staging_university",
+      description: "Reject a staging university research entry",
+      parameters: {
+        type: "object",
+        properties: {
+          stagingId: { type: "string" },
+        },
+        required: ["stagingId"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "set_university_published",
+      description: "Publish or unpublish a partner university on the student portal",
+      parameters: {
+        type: "object",
+        properties: {
+          universityId: { type: "string" },
+          published: { type: "boolean" },
+        },
+        required: ["universityId", "published"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "save_email_campaign",
+      description: "Save an email campaign draft to the database",
+      parameters: {
+        type: "object",
+        properties: {
+          subject: { type: "string" },
+          body: { type: "string" },
+        },
+        required: ["subject", "body"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "list_universities",
+      description: "List partner universities with publish status",
+      parameters: {
+        type: "object",
+        properties: {
+          publishedOnly: { type: "boolean" },
+        },
       },
     },
   },
@@ -345,7 +422,50 @@ Best regards,
 The Neom Team
 
 ---
-(Draft only — save via Admin → Email Campaigns)`;
+Use save_email_campaign to persist this draft.`;
+    }
+
+    case "approve_staging_university": {
+      const { universityId } = await approveStagingUniversity(
+        args.stagingId as string,
+        profile
+      );
+      return `Approved staging entry. New university id: ${universityId} (published=false). Use set_university_published to make it visible to students.`;
+    }
+
+    case "reject_staging_university": {
+      await rejectStagingUniversity(args.stagingId as string, profile);
+      return `Rejected staging entry ${args.stagingId}.`;
+    }
+
+    case "set_university_published": {
+      const id = args.universityId as string;
+      const published = Boolean(args.published);
+      await toggleUniversityPublished(id, published);
+      const uni = data.universities.find((u) => u.id === id);
+      return `${uni?.name ?? id} is now ${published ? "published" : "unpublished"}.`;
+    }
+
+    case "save_email_campaign": {
+      const row = await createEmailCampaign({
+        subject: args.subject as string,
+        body: args.body as string,
+        status: "draft",
+      });
+      return `Saved email campaign draft id=${row.id}, subject="${row.subject}".`;
+    }
+
+    case "list_universities": {
+      let unis = data.universities;
+      if (args.publishedOnly) unis = unis.filter((u) => u.published);
+      if (unis.length === 0) return "No universities found.";
+      return unis
+        .slice(0, 20)
+        .map(
+          (u) =>
+            `• ${u.name} (id: ${u.id}) — ${u.published ? "published" : "hidden"} | ${u.tuition}`
+        )
+        .join("\n");
     }
 
     default:

@@ -1,5 +1,5 @@
 import type { User } from "./types";
-import { runAgent } from "./ai/agent";
+import { runAgent, runSingleShotLLM } from "./ai/agent";
 import { buildLiveContext, buildStudentSystemPrompt } from "./ai/context";
 import { fetchPlatformData } from "./db/queries";
 import {
@@ -40,9 +40,17 @@ export async function chatAdmin(
   profile: User
 ): Promise<string> {
   const { buildAdminSystemPrompt } = await import("./ai/context");
-  const { prepareAdminTurn, buildAdminKnowledgeContext, fallbackAdminResponse } =
-    await import("./ai/admin-context");
-  const { isLLMAvailable, isSmallLocalModel } = await import("./ai/config");
+  const {
+    prepareAdminTurn,
+    buildAdminKnowledgeContext,
+    fallbackAdminResponse,
+    shouldAnswerFromPlatformData,
+  } = await import("./ai/admin-context");
+  const { isLLMAvailable, isSmallLocalModel, supportsFunctionCalling } = await import(
+    "./ai/config"
+  );
+
+  const trimmedHistory = history.slice(-6);
 
   const { augmentedMessage, data, researchSummary, directReply } = await prepareAdminTurn(
     userMessage,
@@ -53,17 +61,32 @@ export async function chatAdmin(
     return directReply.trim();
   }
 
+  if (shouldAnswerFromPlatformData(userMessage)) {
+    return fallbackAdminResponse(userMessage, data);
+  }
+
   const compact = isSmallLocalModel();
   const contextText = buildAdminKnowledgeContext(compact);
+  const systemPrompt = buildAdminSystemPrompt(contextText);
 
-  let reply = await runAgent({
-    systemPrompt: buildAdminSystemPrompt(contextText),
-    userMessage: augmentedMessage,
-    history,
-    profile,
-    agentType: "admin",
-    fallback: () => fallbackAdminResponse(userMessage, data),
-  });
+  let reply: string | null = null;
+
+  if (!supportsFunctionCalling()) {
+    reply = await runSingleShotLLM({
+      systemPrompt,
+      userMessage: augmentedMessage,
+      history: trimmedHistory,
+    });
+  } else {
+    reply = await runAgent({
+      systemPrompt,
+      userMessage: augmentedMessage,
+      history: trimmedHistory,
+      profile,
+      agentType: "admin",
+      fallback: () => fallbackAdminResponse(userMessage, data),
+    });
+  }
 
   if (!reply?.trim()) {
     reply = fallbackAdminResponse(userMessage, data);
@@ -150,5 +173,5 @@ function fallbackStudentResponse(message: string): string {
     return `Upcoming application deadlines:\n\n${upcoming}\n\nI recommend starting early — our 6-step process is designed to be smooth and stress-free!`;
   }
 
-  return `I'm Neom AI, here to help you navigate your university application journey! I can tell you about:\n\n• Our services and application process\n• Partner universities and countries\n• Program categories and deadlines\n• Personalized recommendations\n\nWhat would you like to know? (Tip: Configure QWEN_API_URL on Railway for full AI capabilities.)\n\n${NEOM_KNOWLEDGE.slice(0, 200)}...`;
+  return `I'm Neom AI, here to help you navigate your university application journey! I can tell you about:\n\n• Our services and application process\n• Partner universities and countries\n• Program categories and deadlines\n• Personalized recommendations\n\nWhat would you like to know?\n\n${NEOM_KNOWLEDGE.slice(0, 200)}...`;
 }

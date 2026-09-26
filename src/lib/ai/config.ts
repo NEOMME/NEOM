@@ -48,18 +48,6 @@ export function getActiveProvider(): AIProvider {
   return "groq";
 }
 
-/** Providers to try in order (primary first, then fallbacks). */
-export function getProviderChain(): AIProvider[] {
-  const primary = getActiveProvider();
-  const chain: AIProvider[] = [primary];
-
-  for (const p of ["qwen", "groq", "deepseek"] as AIProvider[]) {
-    if (p !== primary && isProviderConfigured(p)) chain.push(p);
-  }
-
-  return chain;
-}
-
 export function isProviderConfigured(provider: AIProvider): boolean {
   switch (provider) {
     case "qwen":
@@ -160,9 +148,37 @@ export function getMaxContextChars(provider: AIProvider = getActiveProvider()): 
 
 export function getLLMGenerationOptions(provider: AIProvider = getActiveProvider()) {
   return {
-    maxTokens: isSmallLocalModel(provider) ? 512 : 2048,
+    maxTokens: isSmallLocalModel(provider) ? 384 : 1536,
     temperature: isSmallLocalModel(provider) ? 0.4 : 0.7,
   };
+}
+
+export function getLLMRequestTimeoutMs(provider: AIProvider = getActiveProvider()): number {
+  if (provider === "groq") return 25_000;
+  if (isSmallLocalModel(provider)) return 22_000;
+  return 40_000;
+}
+
+/** Prefer Groq/DeepSeek for latency when configured, unless AI_PROVIDER is explicit. */
+export function getProviderChain(): AIProvider[] {
+  const explicit = process.env.AI_PROVIDER?.toLowerCase();
+  const hasExplicit =
+    explicit === "qwen" || explicit === "groq" || explicit === "deepseek";
+
+  if (!hasExplicit) {
+    const chain: AIProvider[] = [];
+    if (isProviderConfigured("groq")) chain.push("groq");
+    if (isProviderConfigured("deepseek")) chain.push("deepseek");
+    if (isProviderConfigured("qwen")) chain.push("qwen");
+    return chain.length ? chain : [getActiveProvider()];
+  }
+
+  const primary = getActiveProvider();
+  const chain: AIProvider[] = [primary];
+  for (const p of ["groq", "deepseek", "qwen"] as AIProvider[]) {
+    if (p !== primary && isProviderConfigured(p)) chain.push(p);
+  }
+  return chain;
 }
 
 export function getLLMConfig(provider: AIProvider = getActiveProvider()): LLMConfig {
@@ -229,6 +245,7 @@ async function chatCompletionOnce(
       method: "POST",
       headers: getAuthHeaders(provider),
       body: JSON.stringify(body),
+      signal: AbortSignal.timeout(getLLMRequestTimeoutMs(provider)),
     });
 
     if (!res.ok) {
